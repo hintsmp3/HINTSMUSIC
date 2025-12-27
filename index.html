@@ -17,34 +17,6 @@
             position: relative;
         }
 
-        /* Глиттерный оверлей — оставлен как был */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 10px,
-                rgba(255, 255, 255, 0.05) 10px,
-                rgba(255, 255, 255, 0.05) 20px
-            );
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        /* Новый glass-слой ПОВЕРХ глиттера — с преломлением и размытием */
-        body::after {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255, 255, 255, 0.08); /* очень лёгкая белая дымка */
-            backdrop-filter: blur(1.68px); /* основное преломление/размытие */
-            -webkit-backdrop-filter: blur(1.68px); /* для Safari */
-            pointer-events: none;
-            z-index: 2;
-        }
-
         h1 {
             font-size: 5em;
             margin: 80px 0 60px;

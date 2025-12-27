@@ -4,26 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HINTS MUSIC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Impact&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
-            padding: 0 0 120px;
+            padding: 0 0 140px;
             min-height: 100vh;
-            font-family: 'Arial Black', Arial, sans-serif;
+            font-family: 'Bebas Neue', 'Impact', 'Arial Black', sans-serif;
             color: #fff;
             text-align: center;
             background: linear-gradient(rgba(255, 105, 255, 0.75), rgba(255, 200, 255, 0.65)),
                         url('IMG_7851.jpeg') center center / cover no-repeat fixed;
             position: relative;
+            letter-spacing: 2px;
         }
 
         h1 {
-            font-size: 5em;
+            font-family: 'Bebas Neue', 'Impact', sans-serif;
+            font-size: 6em;
             margin: 80px 0 60px;
             text-shadow: 
                 0 0 20px #ffffff,
-                0 0 40px #cccccc,
-                4px 4px 0 #000;
+                0 0 40px #ff69ff,
+                5px 5px 0 #000;
             animation: glow 3s infinite alternate;
             position: relative;
             z-index: 3;
@@ -31,8 +34,8 @@
         }
 
         @keyframes glow {
-            from { text-shadow: 0 0 20px #ffffff, 0 0 40px #cccccc, 4px 4px 0 #000; }
-            to { text-shadow: 0 0 35px #ffffff, 0 0 70px #ffccff, 6px 6px 0 #000; }
+            from { text-shadow: 0 0 20px #ffffff, 0 0 40px #ff69ff, 5px 5px 0 #000; }
+            to { text-shadow: 0 0 40px #ffffff, 0 0 80px #ff69ff, 8px 8px 0 #000; }
         }
 
         /* Новости */
@@ -84,16 +87,20 @@
         }
 
         .news-text h2 {
-            font-size: 4em;
+            font-family: 'Bebas Neue', 'Impact', sans-serif;
+            font-size: 4.5em;
             margin: 0 0 15px;
             text-shadow: 0 0 20px #000, 0 6px 15px #000;
+            letter-spacing: 3px;
         }
 
         .news-text p {
-            font-size: 2.2em;
+            font-family: 'Bebas Neue', 'Impact', sans-serif;
+            font-size: 2.5em;
             margin: 8px 0;
             text-shadow: 0 3px 12px #000;
             line-height: 1.3;
+            letter-spacing: 2px;
         }
 
         /* Релизы */
@@ -133,10 +140,12 @@
         }
 
         .release p {
+            font-family: 'Bebas Neue', 'Impact', sans-serif;
             margin: 30px 0 0;
-            font-size: 2em;
+            font-size: 2.2em;
             text-shadow: 0 3px 12px #000;
             transition: all 0.4s ease;
+            letter-spacing: 1.5px;
         }
 
         .release:hover p {
@@ -144,22 +153,22 @@
             text-shadow: 0 0 20px #fff;
         }
 
-        /* Кастомный плеер */
+        /* Кастомный плеер — улучшенный */
         .custom-player {
             position: fixed;
             bottom: 30px;
             left: 50%;
-            transform: translateX(-50%) translateY(150px); /* Изначально скрыт снизу */
+            transform: translateX(-50%) translateY(150px);
             width: 90%;
             max-width: 900px;
-            background: rgba(0, 0, 0, 0.55);
-            backdrop-filter: blur(15px);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
             border-radius: 50px;
-            padding: 15px 25px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+            padding: 20px 30px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 25px;
             z-index: 10;
             transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.8s ease;
             opacity: 0;
@@ -171,11 +180,11 @@
         }
 
         .track-cover {
-            width: 70px;
-            height: 70px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             object-fit: cover;
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 40px rgba(255, 105, 255, 0.6);
             animation: rotate 20s linear infinite paused;
         }
 
@@ -195,30 +204,35 @@
         }
 
         .track-title {
-            font-size: 1.8em;
+            font-family: 'Bebas Neue', 'Impact', sans-serif;
+            font-size: 2.2em;
             margin: 0;
-            text-shadow: 0 2px 8px #000;
+            text-shadow: 0 2px 10px #000;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            letter-spacing: 2px;
         }
 
         .track-artist {
-            font-size: 1.2em;
+            font-family: 'Bebas Neue', 'Impact', sans-serif;
+            font-size: 1.4em;
             opacity: 0.9;
             margin: 5px 0 0;
+            letter-spacing: 1px;
         }
 
         .controls {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 25px;
+            width: 400px;
         }
 
         .play-pause {
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.2);
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 105, 255, 0.4);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -228,75 +242,91 @@
         }
 
         .play-pause:hover {
-            background: rgba(255, 255, 255, 0.4);
-            transform: scale(1.1);
+            background: rgba(255, 105, 255, 0.6);
+            transform: scale(1.15);
         }
 
         .play-pause svg {
-            width: 30px;
-            height: 30px;
+            width: 35px;
+            height: 35px;
             fill: #fff;
         }
 
         .progress-container {
             flex: 1;
-            height: 6px;
+            height: 8px;
             background: rgba(255, 255, 255, 0.2);
-            border-radius: 3px;
+            border-radius: 4px;
             overflow: hidden;
             cursor: pointer;
+            position: relative;
         }
 
         .progress {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, #ff69ff, #ffffff);
+            background: linear-gradient(90deg, #ff69ff, #ffccff);
+            border-radius: 4px;
             transition: width 0.1s linear;
         }
 
-        .time {
-            font-size: 1.1em;
-            min-width: 100px;
+        .time-left {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3em;
+            min-width: 70px;
+            text-align: left;
+            margin-right: 15px;
+        }
+
+        .time-right {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3em;
+            min-width: 70px;
             text-align: right;
+            margin-left: 15px;
         }
 
         /* Мобильная адаптация */
         @media (max-width: 768px) {
-            h1 { font-size: 3.5em; margin: 60px 0 40px; }
-            .news-text h2 { font-size: 2.8em; }
-            .news-text p { font-size: 1.6em; }
-            .releases { gap: 50px; }
-            .release p { font-size: 1.6em; }
+            h1 { font-size: 4em; }
+            .news-text h2 { font-size: 3em; }
+            .news-text p { font-size: 1.8em; }
+            .release p { font-size: 1.8em; }
 
             .custom-player {
                 flex-direction: column;
-                padding: 15px;
-                gap: 15px;
+                padding: 20px;
+                gap: 20px;
             }
 
             .track-info {
                 text-align: center;
             }
 
-            .track-title {
-                font-size: 1.5em;
-            }
+            .track-title { font-size: 2em; }
+            .track-artist { font-size: 1.3em; }
 
             .controls {
                 width: 100%;
-                justify-content: center;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .progress-wrapper {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .time-left, .time-right {
+                font-size: 1.2em;
+                min-width: 60px;
             }
 
             .progress-container {
-                order: -1;
-                width: 100%;
-            }
-
-            .time {
-                position: absolute;
-                bottom: 8px;
-                right: 20px;
-                font-size: 0.9em;
+                flex: 1;
+                margin: 0 10px;
             }
         }
     </style>
@@ -336,7 +366,7 @@
         </div>
     </div>
 
-    <!-- Кастомный плеер -->
+    <!-- Кастомный плеер — улучшенный layout -->
     <div class="custom-player" id="customPlayer">
         <img src="IMG_7851.jpeg" alt="Cover" class="track-cover" id="trackCover">
 
@@ -350,15 +380,17 @@
                 <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             </div>
 
-            <div class="progress-container" id="progressContainer">
-                <div class="progress" id="progress"></div>
+            <div class="progress-wrapper">
+                <div class="time-left" id="timeLeft">0:00</div>
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress" id="progress"></div>
+                </div>
+                <div class="time-right" id="timeRight">0:00</div>
             </div>
-
-            <div class="time" id="time">0:00 / 0:00</div>
         </div>
     </div>
 
-    <!-- Скрытый нативный аудио для воспроизведения -->
+    <!-- Скрытый аудио -->
     <audio id="audioPlayer" loop></audio>
 
     <script>
@@ -370,23 +402,23 @@
         const playPause = document.getElementById('playPause');
         const progressContainer = document.getElementById('progressContainer');
         const progress = document.getElementById('progress');
-        const timeDisplay = document.getElementById('time');
+        const timeLeft = document.getElementById('timeLeft');
+        const timeRight = document.getElementById('timeRight');
         const h1 = document.querySelector('h1');
 
         let isPlaying = false;
-        let hasStartedPlaying = false; // Флаг: был ли уже запущен любой трек
+        let hasStartedPlaying = false;
 
         function playTrack(src, title, artist, cover) {
             audio.src = src;
 
-            // Если это первый запуск музыки — показываем плеер с анимацией
             if (!hasStartedPlaying) {
                 audio.play().then(() => {
                     isPlaying = true;
                     hasStartedPlaying = true;
                     updatePlayPause();
                     trackCover.classList.add('playing');
-                    customPlayer.classList.add('visible'); // Анимированное появление снизу
+                    customPlayer.classList.add('visible');
                 });
             } else {
                 audio.play().then(() => {
@@ -402,7 +434,6 @@
             h1.textContent = 'HINTS MUSIC — ' + title;
         }
 
-        // Play/Pause
         playPause.addEventListener('click', () => {
             if (isPlaying) {
                 audio.pause();
@@ -425,36 +456,33 @@
             }
         }
 
-        // Прогресс и время
         audio.addEventListener('timeupdate', () => {
             if (audio.duration) {
                 const percent = (audio.currentTime / audio.duration) * 100;
                 progress.style.width = percent + '%';
 
-                const current = formatTime(audio.currentTime);
-                const total = formatTime(audio.duration);
-                timeDisplay.textContent = `${current} / ${total}`;
+                timeLeft.textContent = formatTime(audio.currentTime);
+                timeRight.textContent = formatTime(audio.duration);
             }
         });
 
-        // Клик по прогрессу
         progressContainer.addEventListener('click', (e) => {
             const rect = progressContainer.getBoundingClientRect();
             const x = e.clientX - rect.left;
-            const percent = x / rect.width;
+            const percent = Math.max(0, Math.min(1, x / rect.width));
             audio.currentTime = percent * audio.duration;
         });
 
         function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
             const mins = Math.floor(seconds / 60);
             const secs = Math.floor(seconds % 60);
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
-        // Авто-скрытие/показ при скролле (оставляем, работает только после появления плеера)
         let lastScroll = 0;
         window.addEventListener('scroll', () => {
-            if (hasStartedPlaying) { // Только если музыка уже играла
+            if (hasStartedPlaying) {
                 if (window.scrollY > lastScroll) {
                     customPlayer.style.transform = 'translateX(-50%) translateY(150px)';
                 } else {

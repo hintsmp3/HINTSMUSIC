@@ -229,6 +229,25 @@
             mask-image: radial-gradient(circle, transparent 0 14%, black 15%);
         }
 
+        .vinyl::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 14%;
+            height: 14%;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 1;
+
+            /* прозрачная внутренняя обводка дырки */
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, 0.25),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.35),
+                inset 0 0 6px rgba(0, 0, 0, 0.6);
+        }
+
         .vinyl::after {
             content: '';
             position: absolute;

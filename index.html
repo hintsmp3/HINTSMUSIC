@@ -7,56 +7,138 @@
     <style>
         body {
             margin: 0;
-            background: #ff99ff url('background.jpg') repeat; /* замени на свой фон или удали */
-            color: #000;
-            font-family: 'Arial Black', Arial, sans-serif;
-            text-align: center;
+            padding: 0;
             min-height: 100vh;
+            font-family: 'Arial Black', Arial, sans-serif;
+            color: #fff;
+            text-align: center;
+            background: linear-gradient(rgba(255, 105, 255, 0.7), rgba(255, 200, 255, 0.6)),
+                        url('background.jpg') center center / cover no-repeat fixed;
+            /* Замени 'background.jpg' на имя своего фонового изображения */
         }
+
+        /* Глиттерный оверлей для вайба */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255, 255, 255, 0.05) 10px,
+                rgba(255, 255, 255, 0.05) 20px
+            );
+            pointer-events: none;
+            z-index: 1;
+        }
+
         h1 {
-            font-size: 4em;
-            margin: 40px 0;
-            text-shadow: 4px 4px yellow;
+            font-size: 5em;
+            margin: 60px 0 40px;
+            text-shadow: 
+                0 0 20px yellow,
+                0 0 40px #ff00ff,
+                4px 4px 0 #000;
+            animation: glow 3s infinite alternate;
         }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px yellow, 0 0 40px #ff00ff, 4px 4px 0 #000; }
+            to { text-shadow: 0 0 30px yellow, 0 0 60px #ff00ff, 6px 6px 0 #000; }
+        }
+
         .news {
             max-width: 800px;
-            margin: 0 auto 60px;
-            padding: 20px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 20px;
+            margin: 0 auto 80px;
+            padding: 30px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 3px solid yellow;
+            border-radius: 30px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 30px rgba(255, 255, 0, 0.6);
         }
+
+        .news h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: yellow;
+            text-shadow: 0 0 15px #ff00ff;
+        }
+
+        .news p {
+            font-size: 1.4em;
+            line-height: 1.6;
+        }
+
         .releases {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 40px;
-            max-width: 1000px;
-            margin: 0 auto;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 50px;
+            max-width: 1100px;
+            margin: 0 auto 100px;
             padding: 20px;
+            position: relative;
+            z-index: 2;
         }
+
         .release {
             cursor: pointer;
-            transition: transform 0.3s;
+            transition: all 0.4s ease;
         }
+
         .release:hover {
-            transform: scale(1.1);
+            transform: scale(1.15) rotate(5deg);
         }
+
         .release img {
             width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: cover;
             border-radius: 50%;
-            box-shadow: 0 0 30px yellow;
+            border: 6px solid yellow;
+            box-shadow: 
+                0 0 40px rgba(255, 255, 0, 0.8),
+                0 0 80px rgba(255, 0, 255, 0.6);
+            transition: all 0.4s;
         }
+
+        .release:hover img {
+            box-shadow: 
+                0 0 60px yellow,
+                0 0 120px #ff00ff;
+            border-color: #ff00ff;
+        }
+
         .release p {
-            margin: 10px 0;
-            font-size: 1.5em;
+            margin: 20px 0 0;
+            font-size: 1.8em;
+            text-shadow: 0 0 10px #000;
         }
+
+        /* Стилизованный плеер */
         audio {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
-            max-width: 600px;
-            z-index: 100;
+            max-width: 700px;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 50px;
+            padding: 10px;
+            box-shadow: 0 0 30px yellow;
+        }
+
+        audio::-webkit-media-controls-panel {
+            background: linear-gradient(to right, #ff00ff, yellow);
+            border-radius: 50px;
+        }
+
+        audio::-webkit-media-controls-play-button,
+        audio::-webkit-media-controls-volume-slider {
+            filter: hue-rotate(180deg);
         }
     </style>
 </head>
@@ -69,14 +151,12 @@
         <h2>NEWS</h2>
         <p>New release soon<br>
          HINTS</p>
-        <!-- Здесь можешь добавлять новые новости сверху -->
     </div>
 
     <!-- Релизы -->
     <div class="releases">
-        <!-- Пример одного релиза -->
-        <div class="release" onclick="playTrack('track1.mp3', 'Название релиза 1')">
-            <img src="IMG_7852.jpeg" alt="Release 1">
+        <div class="release" onclick="playTrack('track1.mp3', 'Nazareth')">
+            <img src="IMG_7852.jpeg" alt="Nazareth">
             <p>Nazareth</p>
         </div>
 
@@ -94,10 +174,9 @@
             <img src="cover4.jpg" alt="Release 4">
             <p>Release 4</p>
         </div>
-        <!-- Добавляй сколько нужно -->
     </div>
 
-    <!-- Плеер (фиксированный внизу) -->
+    <!-- Плеер -->
     <audio id="player" controls autoplay loop>
         <source src="music/intro-track.mp3" type="audio/mpeg">
         Ваш браузер не поддерживает аудио.
@@ -106,17 +185,11 @@
     <script>
         const player = document.getElementById('player');
 
-        // Функция смены трека при клике на обложку
         function playTrack(src, title) {
             player.src = src;
             player.play();
             document.querySelector('h1').innerText = 'HINTS MUSIC — ' + title;
-            // Опционально: вернуться к основному заголовку через время
-            // setTimeout(() => document.querySelector('h1').innerText = 'HINTS MUSIC', 5000);
         }
-
-        // Автозапуск фонового трека при загрузке (если хочешь другой стартовый трек)
-        // player.src = 'music/background.mp3';
     </script>
 
 </body>

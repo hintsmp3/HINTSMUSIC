@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HINTS MUSIC</title>
+    <style>
+        body {
+            margin: 0;
+            background: #ff99ff url('background.jpg') repeat; /* замени на свой фон или удали */
+            color: #000;
+            font-family: 'Arial Black', Arial, sans-serif;
+            text-align: center;
+            min-height: 100vh;
+        }
+        h1 {
+            font-size: 4em;
+            margin: 40px 0;
+            text-shadow: 4px 4px yellow;
+        }
+        .news {
+            max-width: 800px;
+            margin: 0 auto 60px;
+            padding: 20px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 20px;
+        }
+        .releases {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .release {
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .release:hover {
+            transform: scale(1.1);
+        }
+        .release img {
+            width: 100%;
+            border-radius: 50%;
+            box-shadow: 0 0 30px yellow;
+        }
+        .release p {
+            margin: 10px 0;
+            font-size: 1.5em;
+        }
+        audio {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>HINTS MUSIC</h1>
+
+    <!-- Блок новостей -->
+    <div class="news">
+        <h2>NEWS</h2>
+        <p>Новый релиз скоро 🔜<br>
+        Следите за обновлениями в телеге / твиттере / etc.</p>
+        <!-- Здесь можешь добавлять новые новости сверху -->
+    </div>
+
+    <!-- Релизы -->
+    <div class="releases">
+        <!-- Пример одного релиза -->
+        <div class="release" onclick="playTrack('music/track1.mp3', 'Название релиза 1')">
+            <img src="cover1.jpg" alt="Release 1">
+            <p>Release 1</p>
+        </div>
+
+        <div class="release" onclick="playTrack('music/track2.mp3', 'Release 2')">
+            <img src="cover2.jpg" alt="Release 2">
+            <p>Release 2</p>
+        </div>
+
+        <div class="release" onclick="playTrack('music/track3.mp3', 'Release 3')">
+            <img src="cover3.jpg" alt="Release 3">
+            <p>Release 3</p>
+        </div>
+
+        <div class="release" onclick="playTrack('music/track4.mp3', 'Release 4')">
+            <img src="cover4.jpg" alt="Release 4">
+            <p>Release 4</p>
+        </div>
+        <!-- Добавляй сколько нужно -->
+    </div>
+
+    <!-- Плеер (фиксированный внизу) -->
+    <audio id="player" controls autoplay loop>
+        <source src="music/intro-track.mp3" type="audio/mpeg">
+        Ваш браузер не поддерживает аудио.
+    </audio>
+
+    <script>
+        const player = document.getElementById('player');
+
+        // Функция смены трека при клике на обложку
+        function playTrack(src, title) {
+            player.src = src;
+            player.play();
+            document.querySelector('h1').innerText = 'HINTS MUSIC — ' + title;
+            // Опционально: вернуться к основному заголовку через время
+            // setTimeout(() => document.querySelector('h1').innerText = 'HINTS MUSIC', 5000);
+        }
+
+        // Автозапуск фонового трека при загрузке (если хочешь другой стартовый трек)
+        // player.src = 'music/background.mp3';
+    </script>
+
+</body>
+</html>

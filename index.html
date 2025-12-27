@@ -37,6 +37,15 @@
             pointer-events: none;
         }
 
+        #grainCanvas {
+            position: fixed;
+            inset: 0;
+            z-index: 3;              /* выше glCanvas, ниже UI */
+            pointer-events: none;
+            mix-blend-mode: overlay; /* можно soft-light */
+            opacity: 0.18;
+        }
+
         /* Слой контента */
         .content-layer {
             position: relative;
@@ -486,6 +495,7 @@
 
     <!-- WebGL Canvas поверх фона -->
     <canvas id="glCanvas"></canvas>
+    <canvas id="grainCanvas"></canvas>
 
     <!-- Частицы -->
     <div class="particles" id="particles"></div>
@@ -841,6 +851,87 @@
             requestAnimationFrame(render);
         }
         render();
+
+        // === GRAIN POST-PROCESS LAYER ===
+        const grainCanvas = document.getElementById('grainCanvas');
+        const ggl = grainCanvas.getContext('webgl');
+
+        function resizeGrain() {
+            grainCanvas.width = innerWidth;
+            grainCanvas.height = innerHeight;
+            ggl.viewport(0, 0, grainCanvas.width, grainCanvas.height);
+        }
+        resizeGrain();
+        addEventListener('resize', resizeGrain);
+
+        // --- Shaders ---
+        const grainVS = `
+attribute vec2 p;
+void main() {
+    gl_Position = vec4(p,0.,1.);
+}
+`;
+
+        const grainFS = `
+precision mediump float;
+uniform vec2 r;
+uniform float t;
+
+float rand(vec2 c){
+    return fract(sin(dot(c,vec2(12.9898,78.233))) * 43758.5453);
+}
+
+void main(){
+    vec2 uv = gl_FragCoord.xy / r;
+
+    float n = rand(uv * r + t * 60.0);
+    float scan = sin(uv.y * r.y * 1.5);
+
+    float grain = n * 0.6 + scan * 0.15;
+    gl_FragColor = vec4(vec3(grain), 1.0);
+}
+`;
+
+        function gshader(type, src){
+            const s = ggl.createShader(type);
+            ggl.shaderSource(s, src);
+            ggl.compileShader(s);
+            return s;
+        }
+
+        const gp = ggl.createProgram();
+        ggl.attachShader(gp, gshader(ggl.VERTEX_SHADER, grainVS));
+        ggl.attachShader(gp, gshader(ggl.FRAGMENT_SHADER, grainFS));
+        ggl.linkProgram(gp);
+
+        const gbuf = ggl.createBuffer();
+        ggl.bindBuffer(ggl.ARRAY_BUFFER, gbuf);
+        ggl.bufferData(
+            ggl.ARRAY_BUFFER,
+            new Float32Array([-1,-1, 1,-1, -1,1, 1,1]),
+            ggl.STATIC_DRAW
+        );
+
+        const locP = ggl.getAttribLocation(gp, 'p');
+        const locT = ggl.getUniformLocation(gp, 't');
+        const locR = ggl.getUniformLocation(gp, 'r');
+
+        // --- Grain render loop ---
+        function renderGrain(){
+            ggl.clear(ggl.COLOR_BUFFER_BIT);
+            ggl.useProgram(gp);
+
+            ggl.enableVertexAttribArray(locP);
+            ggl.bindBuffer(ggl.ARRAY_BUFFER, gbuf);
+            ggl.vertexAttribPointer(locP, 2, ggl.FLOAT, false, 0, 0);
+
+            ggl.uniform1f(locT, performance.now() * 0.001);
+            ggl.uniform2f(locR, grainCanvas.width, grainCanvas.height);
+
+            ggl.drawArrays(ggl.TRIANGLE_STRIP, 0, 4);
+            requestAnimationFrame(renderGrain);
+        }
+        renderGrain();
 
         // === PARTICLES ===
         const particlesContainer = document.getElementById('particles');

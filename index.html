@@ -12,7 +12,7 @@
             font-family: 'Arial Black', Arial, sans-serif;
             color: #fff;
             text-align: center;
-            background: linear-gradient(rgba(255, 105, 255, 0.7), rgba(255, 200, 255, 0.6)),
+            background: linear-gradient(rgba(255, 105, 255, 0.75), rgba(255, 200, 255, 0.65)),
                         url('IMG_7851.jpeg') center center / cover no-repeat fixed;
             position: relative;
         }
@@ -27,14 +27,15 @@
             animation: glow 3s infinite alternate;
             position: relative;
             z-index: 3;
+            transition: all 0.4s ease;
         }
 
         @keyframes glow {
             from { text-shadow: 0 0 20px #ffffff, 0 0 40px #cccccc, 4px 4px 0 #000; }
-            to { text-shadow: 0 0 30px #ffffff, 0 0 60px #cccccc, 6px 6px 0 #000; }
+            to { text-shadow: 0 0 35px #ffffff, 0 0 70px #ffccff, 6px 6px 0 #000; }
         }
 
-        /* Новый блок новостей — фото с текстом поверх */
+        /* Новости */
         .news {
             position: relative;
             max-width: 1200px;
@@ -42,56 +43,66 @@
             margin: 0 auto 100px;
             border-radius: 30px;
             overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-            z-index: 3;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+            transition: transform 0.5s ease;
+        }
+
+        .news:hover {
+            transform: scale(1.03);
         }
 
         .news-img {
             width: 100%;
             height: auto;
             display: block;
+            transition: transform 0.6s ease;
         }
 
-        /* Тёмный градиент снизу для читаемости текста */
+        .news:hover .news-img {
+            transform: scale(1.1);
+        }
+
         .news::after {
             content: '';
             position: absolute;
             bottom: 0;
             left: 0;
             width: 100%;
-            height: 50%;
-            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            height: 60%;
+            background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
             pointer-events: none;
         }
 
-        /* Текст поверх фото */
         .news-text {
             position: absolute;
             bottom: 30px;
             left: 0;
             right: 0;
             z-index: 4;
+            pointer-events: none;
         }
 
         .news-text h2 {
-            font-size: 3.5em;
-            margin: 0 0 10px;
-            text-shadow: 0 0 15px #000, 0 4px 10px #000;
+            font-size: 4em;
+            margin: 0 0 15px;
+            text-shadow: 0 0 20px #000, 0 6px 15px #000;
         }
 
         .news-text p {
-            font-size: 2em;
-            margin: 10px 0;
-            text-shadow: 0 2px 10px #000;
-            line-height: 1.4;
+            font-size: 2.2em;
+            margin: 8px 0;
+            text-shadow: 0 3px 12px #000;
+            line-height: 1.3;
         }
 
+        /* Релизы */
         .releases {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 60px;
-            max-width: 1200px;
-            margin: 0 auto 120px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 70px;
+            max-width: 1300px;
+            margin: 0 auto 140px;
             padding: 20px;
             position: relative;
             z-index: 3;
@@ -99,11 +110,11 @@
 
         .release {
             cursor: pointer;
-            transition: all 0.4s ease;
+            transition: all 0.5s ease;
         }
 
         .release:hover {
-            transform: scale(1.15) rotate(5deg);
+            transform: scale(1.2) translateY(-15px) rotate(6deg);
         }
 
         .release img {
@@ -111,37 +122,80 @@
             aspect-ratio: 1/1;
             object-fit: cover;
             border-radius: 50%;
-            border: 4px solid #cccccc;
-            transition: all 0.4s;
+            border: 5px solid #dddddd;
+            transition: all 0.5s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
         .release:hover img {
             border-color: #ffffff;
-            box-shadow: 0 0 40px rgba(255, 255, 255, 0.6);
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.8);
         }
 
         .release p {
-            margin: 25px 0 0;
-            font-size: 1.8em;
-            text-shadow: 0 2px 10px #000;
+            margin: 30px 0 0;
+            font-size: 2em;
+            text-shadow: 0 3px 12px #000;
+            transition: all 0.4s ease;
         }
 
+        .release:hover p {
+            transform: scale(1.1);
+            text-shadow: 0 0 20px #fff;
+        }
+
+        /* Плеер */
         audio {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
-            max-width: 700px;
+            max-width: 800px;
             z-index: 10;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.5);
             border-radius: 50px;
-            padding: 8px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
         }
 
         audio::-webkit-media-controls-panel {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.25);
             border-radius: 50px;
+        }
+
+        audio::-webkit-media-controls-play-button,
+        audio::-webkit-media-controls-volume-slider {
+            filter: brightness(1.2);
+        }
+
+        /* Плавный скролл */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Мобильная адаптация */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 3.5em;
+                margin: 60px 0 40px;
+            }
+
+            .news-text h2 {
+                font-size: 2.8em;
+            }
+
+            .news-text p {
+                font-size: 1.6em;
+            }
+
+            .releases {
+                gap: 50px;
+            }
+
+            .release p {
+                font-size: 1.6em;
+            }
         }
     </style>
 </head>
@@ -149,8 +203,8 @@
 
     <h1>HINTS MUSIC</h1>
 
-    <!-- Блок новостей: фото + текст поверх -->
-    <div class="news">
+    <!-- Блок новостей -->
+    <div class="news" onclick="playTrack('track1.mp3', 'Nazareth')">
         <img src="IMG_7561.jpeg" alt="News image" class="news-img">
         
         <div class="news-text">
@@ -160,7 +214,7 @@
         </div>
     </div>
 
-    <!-- Релизы — без изменений -->
+    <!-- Релизы -->
     <div class="releases">
         <div class="release" onclick="playTrack('track1.mp3', 'Nazareth')">
             <img src="IMG_7852.jpeg" alt="Slut Online, lindtayl0r - Nazareth">
@@ -190,12 +244,33 @@
 
     <script>
         const player = document.getElementById('player');
+        const titleElement = document.querySelector('h1');
 
         function playTrack(src, title) {
+            // Плавная смена трека
+            player.style.opacity = 0.6;
             player.src = src;
-            player.play();
-            document.querySelector('h1').innerText = 'HINTS MUSIC — ' + title;
+            player.load();
+            player.play().then(() => {
+                player.style.opacity = 1;
+            });
+
+            // Обновление заголовка с анимацией
+            titleElement.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                titleElement.innerText = 'HINTS MUSIC — ' + title;
+                titleElement.style.transform = 'scale(1)';
+            }, 200);
         }
+
+        // Автостарт интро-трека с плавным появлением плеера
+        window.addEventListener('load', () => {
+            player.volume = 0.7;
+            setTimeout(() => {
+                player.style.transition = 'opacity 1s ease';
+                player.style.opacity = 1;
+            }, 500);
+        });
     </script>
 
 </body>

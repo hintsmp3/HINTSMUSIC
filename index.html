@@ -149,7 +149,7 @@
             position: fixed;
             bottom: 30px;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) translateY(150px); /* Изначально скрыт снизу */
             width: 90%;
             max-width: 900px;
             background: rgba(0, 0, 0, 0.55);
@@ -161,11 +161,12 @@
             align-items: center;
             gap: 20px;
             z-index: 10;
-            transition: all 0.4s ease;
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.8s ease;
             opacity: 0;
         }
 
         .custom-player.visible {
+            transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
 
@@ -337,7 +338,7 @@
 
     <!-- Кастомный плеер -->
     <div class="custom-player" id="customPlayer">
-        <img src="IMG_7852.jpeg" alt="Cover" class="track-cover" id="trackCover">
+        <img src="IMG_7851.jpeg" alt="Cover" class="track-cover" id="trackCover">
 
         <div class="track-info">
             <h3 class="track-title" id="trackTitle">HINTS MUSIC</h3>
@@ -373,24 +374,27 @@
         const h1 = document.querySelector('h1');
 
         let isPlaying = false;
-
-        // Инициализация интро-трека
-        window.addEventListener('load', () => {
-            playTrack('music/intro-track.mp3', 'HINTS MUSIC', 'Intro', 'IMG_7851.jpeg');
-            audio.volume = 0.7;
-
-            setTimeout(() => {
-                customPlayer.classList.add('visible');
-            }, 800);
-        });
+        let hasStartedPlaying = false; // Флаг: был ли уже запущен любой трек
 
         function playTrack(src, title, artist, cover) {
             audio.src = src;
-            audio.play().then(() => {
-                isPlaying = true;
-                updatePlayPause();
-                trackCover.classList.add('playing');
-            });
+
+            // Если это первый запуск музыки — показываем плеер с анимацией
+            if (!hasStartedPlaying) {
+                audio.play().then(() => {
+                    isPlaying = true;
+                    hasStartedPlaying = true;
+                    updatePlayPause();
+                    trackCover.classList.add('playing');
+                    customPlayer.classList.add('visible'); // Анимированное появление снизу
+                });
+            } else {
+                audio.play().then(() => {
+                    isPlaying = true;
+                    updatePlayPause();
+                    trackCover.classList.add('playing');
+                });
+            }
 
             trackTitle.textContent = title;
             trackArtist.textContent = artist || 'Unknown';
@@ -447,15 +451,17 @@
             return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
 
-        // Авто-скрытие/показ плеера при скролле (опционально)
+        // Авто-скрытие/показ при скролле (оставляем, работает только после появления плеера)
         let lastScroll = 0;
         window.addEventListener('scroll', () => {
-            if (window.scrollY > lastScroll) {
-                customPlayer.style.transform = 'translateX(-50%) translateY(120px)';
-            } else {
-                customPlayer.style.transform = 'translateX(-50%) translateY(0)';
+            if (hasStartedPlaying) { // Только если музыка уже играла
+                if (window.scrollY > lastScroll) {
+                    customPlayer.style.transform = 'translateX(-50%) translateY(150px)';
+                } else {
+                    customPlayer.style.transform = 'translateX(-50%) translateY(0)';
+                }
+                lastScroll = window.scrollY;
             }
-            lastScroll = window.scrollY;
         });
     </script>
 

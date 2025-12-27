@@ -679,6 +679,7 @@
             }
         `;
 
+
         function createShader(gl, type, source) {
             const shader = gl.createShader(type);
             gl.shaderSource(shader, source);
@@ -719,10 +720,18 @@
         const audioLocation = gl.getUniformLocation(program, 'u_audio');
 
         let startTime = Date.now();
+        let smoothAudio = 0.0;
 
         function render() {
             analyser.getByteFrequencyData(dataArray);
-            const average = dataArray.reduce((a, b) => a + b) / bufferLength / 255.0;
+            const rawAudio = dataArray.reduce((a, b) => a + b) / bufferLength / 255.0;
+
+            // Экспоненциальное сглаживание (инерция)
+            const rise = 0.15;  // скорость реакции на удар
+            const fall = 0.04;  // скорость затухания
+
+            const delta = rawAudio - smoothAudio;
+            smoothAudio += delta * (delta > 0.0 ? rise : fall);
 
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
@@ -735,7 +744,7 @@
 
             gl.uniform1f(timeLocation, (Date.now() - startTime) / 1000.0);
             gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
-            gl.uniform1f(audioLocation, average);
+            gl.uniform1f(audioLocation, smoothAudio);
 
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 

@@ -7,7 +7,7 @@
     <style>
         body {
             margin: 0;
-            padding: 0;
+            padding: 0 0 120px;
             min-height: 100vh;
             font-family: 'Arial Black', Arial, sans-serif;
             color: #fff;
@@ -144,57 +144,158 @@
             text-shadow: 0 0 20px #fff;
         }
 
-        /* Плеер */
-        audio {
+        /* Кастомный плеер */
+        .custom-player {
             position: fixed;
-            bottom: 20px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
-            max-width: 800px;
+            max-width: 900px;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(15px);
+            border-radius: 50px;
+            padding: 15px 25px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            gap: 20px;
             z-index: 10;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 50px;
-            padding: 10px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            transition: all 0.4s ease;
+            opacity: 0;
         }
 
-        audio::-webkit-media-controls-panel {
-            background: rgba(255, 255, 255, 0.25);
-            border-radius: 50px;
+        .custom-player.visible {
+            opacity: 1;
         }
 
-        audio::-webkit-media-controls-play-button,
-        audio::-webkit-media-controls-volume-slider {
-            filter: brightness(1.2);
+        .track-cover {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+            animation: rotate 20s linear infinite paused;
         }
 
-        /* Плавный скролл */
-        html {
-            scroll-behavior: smooth;
+        .track-cover.playing {
+            animation-play-state: running;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .track-info {
+            flex: 1;
+            text-align: left;
+            min-width: 0;
+        }
+
+        .track-title {
+            font-size: 1.8em;
+            margin: 0;
+            text-shadow: 0 2px 8px #000;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-artist {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin: 5px 0 0;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .play-pause {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .play-pause:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        .play-pause svg {
+            width: 30px;
+            height: 30px;
+            fill: #fff;
+        }
+
+        .progress-container {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ff69ff, #ffffff);
+            transition: width 0.1s linear;
+        }
+
+        .time {
+            font-size: 1.1em;
+            min-width: 100px;
+            text-align: right;
         }
 
         /* Мобильная адаптация */
         @media (max-width: 768px) {
-            h1 {
-                font-size: 3.5em;
-                margin: 60px 0 40px;
+            h1 { font-size: 3.5em; margin: 60px 0 40px; }
+            .news-text h2 { font-size: 2.8em; }
+            .news-text p { font-size: 1.6em; }
+            .releases { gap: 50px; }
+            .release p { font-size: 1.6em; }
+
+            .custom-player {
+                flex-direction: column;
+                padding: 15px;
+                gap: 15px;
             }
 
-            .news-text h2 {
-                font-size: 2.8em;
+            .track-info {
+                text-align: center;
             }
 
-            .news-text p {
-                font-size: 1.6em;
+            .track-title {
+                font-size: 1.5em;
             }
 
-            .releases {
-                gap: 50px;
+            .controls {
+                width: 100%;
+                justify-content: center;
             }
 
-            .release p {
-                font-size: 1.6em;
+            .progress-container {
+                order: -1;
+                width: 100%;
+            }
+
+            .time {
+                position: absolute;
+                bottom: 8px;
+                right: 20px;
+                font-size: 0.9em;
             }
         }
     </style>
@@ -203,10 +304,8 @@
 
     <h1>HINTS MUSIC</h1>
 
-    <!-- Блок новостей -->
-    <div class="news" onclick="playTrack('track1.mp3', 'Nazareth')">
+    <div class="news" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
         <img src="IMG_7561.jpeg" alt="News image" class="news-img">
-        
         <div class="news-text">
             <h2>Event</h2>
             <p>12.20.2025<br>HINTS</p>
@@ -214,62 +313,149 @@
         </div>
     </div>
 
-    <!-- Релизы -->
     <div class="releases">
-        <div class="release" onclick="playTrack('track1.mp3', 'Nazareth')">
-            <img src="IMG_7852.jpeg" alt="Slut Online, lindtayl0r - Nazareth">
+        <div class="release" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
+            <img src="IMG_7852.jpeg" alt="Nazareth">
             <p>Slut Online, lindtayl0r - Nazareth</p>
         </div>
 
-        <div class="release" onclick="playTrack('track2.mp3', 'Sex & Limbo')">
-            <img src="IMG_7855.jpeg" alt="Sex_Limbo">
+        <div class="release" onclick="playTrack('track2.mp3', 'Sex & Limbo', 'Slut Online, lindtayl0r', 'IMG_7855.jpeg')">
+            <img src="IMG_7855.jpeg" alt="Sex & Limbo">
             <p>Slut Online, lindtayl0r - Sex & Limbo</p>
         </div>
 
-        <div class="release" onclick="playTrack('track3.mp3', 'SPACEDUST')">
+        <div class="release" onclick="playTrack('track3.mp3', 'SPACEDUST', 'Unknown', 'IMG_7856.jpeg')">
             <img src="IMG_7856.jpeg" alt="SPACEDUST">
             <p>SPACEDUST</p>
         </div>
 
-        <div class="release" onclick="playTrack('track4.mp3', 'Interstellar')">
+        <div class="release" onclick="playTrack('track4.mp3', 'Interstellar', 'XSDC', 'IMG_7857.jpeg')">
             <img src="IMG_7857.jpeg" alt="Interstellar">
             <p>XSDC - Interstellar</p>
         </div>
     </div>
 
-    <audio id="player" controls autoplay loop>
-        <source src="music/intro-track.mp3" type="audio/mpeg">
-        Ваш браузер не поддерживает аудио.
-    </audio>
+    <!-- Кастомный плеер -->
+    <div class="custom-player" id="customPlayer">
+        <img src="IMG_7852.jpeg" alt="Cover" class="track-cover" id="trackCover">
+
+        <div class="track-info">
+            <h3 class="track-title" id="trackTitle">HINTS MUSIC</h3>
+            <p class="track-artist" id="trackArtist">Intro</p>
+        </div>
+
+        <div class="controls">
+            <div class="play-pause" id="playPause">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress" id="progress"></div>
+            </div>
+
+            <div class="time" id="time">0:00 / 0:00</div>
+        </div>
+    </div>
+
+    <!-- Скрытый нативный аудио для воспроизведения -->
+    <audio id="audioPlayer" loop></audio>
 
     <script>
-        const player = document.getElementById('player');
-        const titleElement = document.querySelector('h1');
+        const audio = document.getElementById('audioPlayer');
+        const customPlayer = document.getElementById('customPlayer');
+        const trackCover = document.getElementById('trackCover');
+        const trackTitle = document.getElementById('trackTitle');
+        const trackArtist = document.getElementById('trackArtist');
+        const playPause = document.getElementById('playPause');
+        const progressContainer = document.getElementById('progressContainer');
+        const progress = document.getElementById('progress');
+        const timeDisplay = document.getElementById('time');
+        const h1 = document.querySelector('h1');
 
-        function playTrack(src, title) {
-            // Плавная смена трека
-            player.style.opacity = 0.6;
-            player.src = src;
-            player.load();
-            player.play().then(() => {
-                player.style.opacity = 1;
+        let isPlaying = false;
+
+        // Инициализация интро-трека
+        window.addEventListener('load', () => {
+            playTrack('music/intro-track.mp3', 'HINTS MUSIC', 'Intro', 'IMG_7851.jpeg');
+            audio.volume = 0.7;
+
+            setTimeout(() => {
+                customPlayer.classList.add('visible');
+            }, 800);
+        });
+
+        function playTrack(src, title, artist, cover) {
+            audio.src = src;
+            audio.play().then(() => {
+                isPlaying = true;
+                updatePlayPause();
+                trackCover.classList.add('playing');
             });
 
-            // Обновление заголовка с анимацией
-            titleElement.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                titleElement.innerText = 'HINTS MUSIC — ' + title;
-                titleElement.style.transform = 'scale(1)';
-            }, 200);
+            trackTitle.textContent = title;
+            trackArtist.textContent = artist || 'Unknown';
+            trackCover.src = cover;
+            h1.textContent = 'HINTS MUSIC — ' + title;
         }
 
-        // Автостарт интро-трека с плавным появлением плеера
-        window.addEventListener('load', () => {
-            player.volume = 0.7;
-            setTimeout(() => {
-                player.style.transition = 'opacity 1s ease';
-                player.style.opacity = 1;
-            }, 500);
+        // Play/Pause
+        playPause.addEventListener('click', () => {
+            if (isPlaying) {
+                audio.pause();
+                isPlaying = false;
+                trackCover.classList.remove('playing');
+            } else {
+                audio.play();
+                isPlaying = true;
+                trackCover.classList.add('playing');
+            }
+            updatePlayPause();
+        });
+
+        function updatePlayPause() {
+            const svg = playPause.querySelector('svg');
+            if (isPlaying) {
+                svg.innerHTML = '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>';
+            } else {
+                svg.innerHTML = '<path d="M8 5v14l11-7z"/>';
+            }
+        }
+
+        // Прогресс и время
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                progress.style.width = percent + '%';
+
+                const current = formatTime(audio.currentTime);
+                const total = formatTime(audio.duration);
+                timeDisplay.textContent = `${current} / ${total}`;
+            }
+        });
+
+        // Клик по прогрессу
+        progressContainer.addEventListener('click', (e) => {
+            const rect = progressContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percent = x / rect.width;
+            audio.currentTime = percent * audio.duration;
+        });
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Авто-скрытие/показ плеера при скролле (опционально)
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > lastScroll) {
+                customPlayer.style.transform = 'translateX(-50%) translateY(120px)';
+            } else {
+                customPlayer.style.transform = 'translateX(-50%) translateY(0)';
+            }
+            lastScroll = window.scrollY;
         });
     </script>
 

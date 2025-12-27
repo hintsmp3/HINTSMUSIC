@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HINTS MUSIC</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Impact&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -14,25 +13,10 @@
             font-family: 'Bebas Neue', 'Impact', 'Arial Black', sans-serif;
             color: #fff;
             text-align: center;
-            background: url('IMG_7851.jpeg') center center / cover no-repeat fixed;
+            background: linear-gradient(rgba(255, 105, 255, 0.75), rgba(255, 200, 255, 0.65)),
+                        url('IMG_7851.jpeg') center center / cover no-repeat fixed;
             position: relative;
             letter-spacing: 2px;
-            overflow: hidden;
-        }
-
-        #webgl-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .content {
-            position: relative;
-            z-index: 2;
         }
 
         h1 {
@@ -169,7 +153,7 @@
             text-shadow: 0 0 20px #fff;
         }
 
-        /* Кастомный плеер */
+        /* Кастомный плеер — улучшенный */
         .custom-player {
             position: fixed;
             bottom: 30px;
@@ -268,12 +252,6 @@
             fill: #fff;
         }
 
-        .progress-wrapper {
-            display: flex;
-            align-items: center;
-            flex: 1;
-        }
-
         .progress-container {
             flex: 1;
             height: 8px;
@@ -282,7 +260,6 @@
             overflow: hidden;
             cursor: pointer;
             position: relative;
-            margin: 0 15px;
         }
 
         .progress {
@@ -293,183 +270,137 @@
             transition: width 0.1s linear;
         }
 
-        .time-left, .time-right {
+        .time-left {
             font-family: 'Bebas Neue', sans-serif;
             font-size: 1.3em;
             min-width: 70px;
+            text-align: left;
+            margin-right: 15px;
         }
 
-        .time-left { text-align: left; }
-        .time-right { text-align: right; }
+        .time-right {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3em;
+            min-width: 70px;
+            text-align: right;
+            margin-left: 15px;
+        }
 
-        /* Мобильная */
+        /* Мобильная адаптация */
         @media (max-width: 768px) {
-            /* ... (остальные стили без изменений) ... */
+            h1 { font-size: 4em; }
+            .news-text h2 { font-size: 3em; }
+            .news-text p { font-size: 1.8em; }
+            .release p { font-size: 1.8em; }
+
             .custom-player {
                 flex-direction: column;
+                padding: 20px;
                 gap: 20px;
             }
+
+            .track-info {
+                text-align: center;
+            }
+
+            .track-title { font-size: 2em; }
+            .track-artist { font-size: 1.3em; }
+
             .controls {
                 width: 100%;
                 flex-direction: column;
+                gap: 15px;
             }
+
             .progress-wrapper {
                 width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .time-left, .time-right {
+                font-size: 1.2em;
+                min-width: 60px;
+            }
+
+            .progress-container {
+                flex: 1;
+                margin: 0 10px;
             }
         }
     </style>
 </head>
 <body>
-    <canvas id="webgl-canvas"></canvas>
 
-    <div class="content">
-        <h1>HINTS MUSIC</h1>
+    <h1>HINTS MUSIC</h1>
 
-        <div class="news" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
-            <!-- ... (остальной HTML без изменений) ... -->
-        </div>
-
-        <div class="releases">
-            <!-- ... (релизы без изменений) ... -->
+    <div class="news" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
+        <img src="IMG_7561.jpeg" alt="News image" class="news-img">
+        <div class="news-text">
+            <h2>Event</h2>
+            <p>12.20.2025<br>HINTS</p>
+            <p>New era soon</p>
         </div>
     </div>
 
-    <!-- Кастомный плеер -->
+    <div class="releases">
+        <div class="release" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
+            <img src="IMG_7852.jpeg" alt="Nazareth">
+            <p>Slut Online, lindtayl0r - Nazareth</p>
+        </div>
+
+        <div class="release" onclick="playTrack('track2.mp3', 'Sex & Limbo', 'Slut Online, lindtayl0r', 'IMG_7855.jpeg')">
+            <img src="IMG_7855.jpeg" alt="Sex & Limbo">
+            <p>Slut Online, lindtayl0r - Sex & Limbo</p>
+        </div>
+
+        <div class="release" onclick="playTrack('track3.mp3', 'SPACEDUST', 'Unknown', 'IMG_7856.jpeg')">
+            <img src="IMG_7856.jpeg" alt="SPACEDUST">
+            <p>SPACEDUST</p>
+        </div>
+
+        <div class="release" onclick="playTrack('track4.mp3', 'Interstellar', 'XSDC', 'IMG_7857.jpeg')">
+            <img src="IMG_7857.jpeg" alt="Interstellar">
+            <p>XSDC - Interstellar</p>
+        </div>
+    </div>
+
+    <!-- Кастомный плеер — улучшенный layout -->
     <div class="custom-player" id="customPlayer">
-        <!-- ... (плеер без изменений) ... -->
+        <img src="IMG_7851.jpeg" alt="Cover" class="track-cover" id="trackCover">
+
+        <div class="track-info">
+            <h3 class="track-title" id="trackTitle">HINTS MUSIC</h3>
+            <p class="track-artist" id="trackArtist">Intro</p>
+        </div>
+
+        <div class="controls">
+            <div class="play-pause" id="playPause">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+
+            <div class="progress-wrapper">
+                <div class="time-left" id="timeLeft">0:00</div>
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress" id="progress"></div>
+                </div>
+                <div class="time-right" id="timeRight">0:00</div>
+            </div>
+        </div>
     </div>
 
-    <audio id="audioPlayer" loop crossorigin="anonymous"></audio>
+    <!-- Скрытый аудио -->
+    <audio id="audioPlayer" loop></audio>
 
     <script>
-        // --- Three.js WebGL particles background ---
-        let scene, camera, renderer, particles, analyser, audioContext;
-
-        function initWebGL() {
-            scene = new THREE.Scene();
-
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 30;
-
-            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('webgl-canvas'), alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-
-            const geometry = new THREE.BufferGeometry();
-            const count = 8000;
-
-            const positions = new Float32Array(count * 3);
-            const scales = new Float32Array(count);
-
-            for (let i = 0; i < count * 3; i += 3) {
-                positions[i] = (Math.random() - 0.5) * 100;
-                positions[i + 1] = (Math.random() - 0.5) * 100;
-                positions[i + 2] = (Math.random() - 0.5) * 50;
-                scales[i / 3] = Math.random() * 1.5 + 0.5;
-            }
-
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('aScale', new THREE.BufferAttribute(scales, 1));
-
-            const material = new THREE.ShaderMaterial({
-                uniforms: {
-                    uTime: { value: 0 },
-                    uBass: { value: 0 },
-                    uMid: { value: 0 },
-                    uTreble: { value: 0 },
-                    uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) }
-                },
-                vertexShader: `
-                    uniform float uTime;
-                    uniform float uBass;
-                    uniform float uMid;
-                    uniform float uTreble;
-                    uniform float uPixelRatio;
-
-                    attribute float aScale;
-
-                    varying float vElevation;
-
-                    void main() {
-                        vec4 modelPosition = modelMatrix * vec4(position, 1.0);
-                        float elevation = sin(modelPosition.x * 0.05 + uTime * 1.5) * 0.5 +
-                                          sin(modelPosition.y * 0.05 + uTime * 1.2) * 0.5;
-                        elevation *= (uBass * 2.0 + uMid * 0.8 + uTreble * 0.5);
-                        modelPosition.z += elevation * 3.0;
-
-                        vec4 viewPosition = viewMatrix * modelPosition;
-                        gl_Position = projectionMatrix * viewPosition;
-
-                        gl_PointSize = aScale * 30.0 * uPixelRatio * (1.0 / -viewPosition.z);
-                        gl_PointSize *= (1.0 + elevation * 2.0);
-
-                        vElevation = elevation;
-                    }
-                `,
-                fragmentShader: `
-                    varying float vElevation;
-
-                    void main() {
-                        float distanceToCenter = distance(gl_PointCoord, vec2(0.5));
-                        float strength = 0.05 / distanceToCenter - 0.1;
-                        strength = clamp(strength + vElevation * 2.0, 0.0, 1.0);
-
-                        vec3 color = mix(vec3(1.0, 0.4, 1.0), vec3(1.0, 1.0, 1.0), vElevation);
-                        gl_FragColor = vec4(color, strength);
-                    }
-                `,
-                transparent: true,
-                depthWrite: false,
-                blending: THREE.AdditiveBlending
-            });
-
-            particles = new THREE.Points(geometry, material);
-            scene.add(particles);
-
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                material.uniforms.uPixelRatio.value = Math.min(window.devicePixelRatio, 2);
-            });
-
-            animate();
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            particles.material.uniforms.uTime.value += 0.01;
-
-            if (analyser) {
-                const data = new Uint8Array(analyser.frequencyBinCount);
-                analyser.getByteFrequencyData(data);
-
-                let bass = 0, mid = 0, treble = 0;
-                for (let i = 0; i < data.length; i++) {
-                    if (i < 20) bass += data[i];
-                    else if (i < 100) mid += data[i];
-                    else treble += data[i];
-                }
-                bass /= 20 * 255;
-                mid /= 80 * 255;
-                treble /= (data.length - 100) * 255;
-
-                particles.material.uniforms.uBass.value = bass;
-                particles.material.uniforms.uMid.value = mid;
-                particles.material.uniforms.uTreble.value = treble;
-            }
-
-            renderer.render(scene, camera);
-        }
-
-        // --- Плеер и аудио (с интеграцией analyser) ---
         const audio = document.getElementById('audioPlayer');
         const customPlayer = document.getElementById('customPlayer');
         const trackCover = document.getElementById('trackCover');
         const trackTitle = document.getElementById('trackTitle');
         const trackArtist = document.getElementById('trackArtist');
         const playPause = document.getElementById('playPause');
+        const progressContainer = document.getElementById('progressContainer');
         const progress = document.getElementById('progress');
         const timeLeft = document.getElementById('timeLeft');
         const timeRight = document.getElementById('timeRight');
@@ -478,19 +409,8 @@
         let isPlaying = false;
         let hasStartedPlaying = false;
 
-        function setupAudioContext() {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const source = audioContext.createMediaElementSource(audio);
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 512;
-            source.connect(analyser);
-            analyser.connect(audioContext.destination);
-        }
-
         function playTrack(src, title, artist, cover) {
             audio.src = src;
-
-            if (!audioContext) setupAudioContext();
 
             if (!hasStartedPlaying) {
                 audio.play().then(() => {
@@ -514,10 +434,64 @@
             h1.textContent = 'HINTS MUSIC — ' + title;
         }
 
-        // ... (остальной код плеера без изменений: playPause, timeupdate, progress click, scroll hide, formatTime) ...
+        playPause.addEventListener('click', () => {
+            if (isPlaying) {
+                audio.pause();
+                isPlaying = false;
+                trackCover.classList.remove('playing');
+            } else {
+                audio.play();
+                isPlaying = true;
+                trackCover.classList.add('playing');
+            }
+            updatePlayPause();
+        });
 
-        // Инициализация WebGL после загрузки
-        window.addEventListener('load', initWebGL);
+        function updatePlayPause() {
+            const svg = playPause.querySelector('svg');
+            if (isPlaying) {
+                svg.innerHTML = '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>';
+            } else {
+                svg.innerHTML = '<path d="M8 5v14l11-7z"/>';
+            }
+        }
+
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                progress.style.width = percent + '%';
+
+                timeLeft.textContent = formatTime(audio.currentTime);
+                timeRight.textContent = formatTime(audio.duration);
+            }
+        });
+
+        progressContainer.addEventListener('click', (e) => {
+            const rect = progressContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percent = Math.max(0, Math.min(1, x / rect.width));
+            audio.currentTime = percent * audio.duration;
+        });
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        let lastScroll = 0;
+        window.addEventListener('scroll', () => {
+            if (hasStartedPlaying) {
+                if (window.scrollY > lastScroll) {
+                    customPlayer.style.transform = 'translateX(-50%) translateY(150px)';
+                } else {
+                    customPlayer.style.transform = 'translateX(-50%) translateY(0)';
+                }
+                lastScroll = window.scrollY;
+            }
+        });
     </script>
+
 </body>
 </html>

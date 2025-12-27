@@ -32,7 +32,7 @@
             width: 100%;
             height: 100%;
             z-index: 1;
-            opacity: 0.4;
+            opacity: 0.6;
             mix-blend-mode: screen;
             pointer-events: none;
         }
@@ -249,7 +249,7 @@
             transform: translateX(-50%) translateY(150px);
             width: 90%;
             max-width: 900px;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.55);
             backdrop-filter: blur(20px);
             border-radius: 50px;
             padding: 20px 30px;
@@ -260,7 +260,6 @@
             z-index: 10;
             transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.8s ease;
             opacity: 0;
-            border: 2px solid rgba(255, 105, 255, 0.3);
         }
 
         .custom-player.visible {
@@ -275,7 +274,6 @@
             object-fit: cover;
             box-shadow: 0 0 40px rgba(255, 105, 255, 0.6);
             animation: rotate 20s linear infinite paused;
-            border: 3px solid #ff69ff;
         }
 
         .track-cover.playing {
@@ -329,7 +327,6 @@
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s;
-            border: 2px solid rgba(255, 105, 255, 0.6);
         }
 
         .play-pause:hover {
@@ -631,7 +628,7 @@
                 vec2 uv = gl_FragCoord.xy / u_resolution;
                 vec3 color = vec3(0.0);
                 
-                float wave = sin(uv.x * 10.0 + u_time) * cos(uv.y * 10.0 + u_time * 0.5);
+                float wave = sin(uv.x * 10.0 + u_time) * cos(uv.y * 10.0 + u_time * 0.3);
                 wave *= u_audio * 2.0;
                 
                 color += vec3(0.5 + 0.5 * sin(u_time + uv.x * 3.0), 

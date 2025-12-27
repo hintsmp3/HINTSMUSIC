@@ -720,7 +720,7 @@
         const audioLocation = gl.getUniformLocation(program, 'u_audio');
 
         let startTime = Date.now();
-        let smoothAudio = 0.0;
+        let smoothAudio = 0.01;
 
         function render() {
             analyser.getByteFrequencyData(dataArray);
@@ -728,7 +728,7 @@
 
             // Экспоненциальное сглаживание (инерция)
             const rise = 0.15;  // скорость реакции на удар
-            const fall = 0.04;  // скорость затухания
+            const fall = 0.01;  // скорость затухания
 
             const delta = rawAudio - smoothAudio;
             smoothAudio += delta * (delta > 0.0 ? rise : fall);

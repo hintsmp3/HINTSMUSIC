@@ -220,6 +220,41 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
+        /* === VINYL HOLE EFFECT === */
+        .release img::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 14%;
+            height: 14%;
+            background: radial-gradient(circle, #000 40%, #222 60%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.8);
+            pointer-events: none;
+        }
+
+        .vinyl {
+            position: relative;
+            border-radius: 50%;
+        }
+
+        .vinyl::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 14%;
+            height: 14%;
+            background: radial-gradient(circle, #000 35%, #111 55%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.9);
+            z-index: 2;
+            pointer-events: none;
+        }
+
         .release:hover img {
             border-color: #ff69ff;
             box-shadow: 0 0 50px rgba(255, 105, 255, 0.8);
@@ -270,8 +305,23 @@
             height: 80px;
             border-radius: 50%;
             object-fit: cover;
+            position: relative;
             box-shadow: 0 0 40px rgba(255, 105, 255, 0.6);
             animation: rotate 20s linear infinite paused;
+        }
+
+        .track-cover::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 18%;
+            height: 18%;
+            background: radial-gradient(circle, #000 40%, #222 60%, transparent 75%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.8);
+            pointer-events: none;
         }
 
         .track-cover.playing {
@@ -430,22 +480,30 @@
 
         <div class="releases">
             <div class="release" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
-                <img src="IMG_7852.jpeg" alt="Nazareth">
+                <div class="vinyl">
+                    <img src="IMG_7852.jpeg" alt="Nazareth">
+                </div>
                 <p>Slut Online, lindtayl0r - Nazareth</p>
             </div>
 
             <div class="release" onclick="playTrack('track2.mp3', 'Sex & Limbo', 'Slut Online, lindtayl0r', 'IMG_7855.jpeg')">
-                <img src="IMG_7855.jpeg" alt="Sex & Limbo">
+                <div class="vinyl">
+                    <img src="IMG_7855.jpeg" alt="Sex & Limbo">
+                </div>
                 <p>Slut Online, lindtayl0r - Sex & Limbo</p>
             </div>
 
             <div class="release" onclick="playTrack('track3.mp3', 'SPACEDUST', 'Unknown', 'IMG_7856.jpeg')">
-                <img src="IMG_7856.jpeg" alt="SPACEDUST">
+                <div class="vinyl">
+                    <img src="IMG_7856.jpeg" alt="SPACEDUST">
+                </div>
                 <p>SPACEDUST</p>
             </div>
 
             <div class="release" onclick="playTrack('track4.mp3', 'Interstellar', 'XSDC', 'IMG_7857.jpeg')">
-                <img src="IMG_7857.jpeg" alt="Interstellar">
+                <div class="vinyl">
+                    <img src="IMG_7857.jpeg" alt="Interstellar">
+                </div>
                 <p>XSDC - Interstellar</p>
             </div>
         </div>

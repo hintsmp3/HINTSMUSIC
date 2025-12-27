@@ -234,18 +234,28 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 14%;
-            height: 14%;
+            width: 22%;
+            height: 22%;
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 1;
 
-            /* прозрачная внутренняя обводка дырки */
+            /* микро-текстура винила вокруг отверстия */
+            background:
+                repeating-radial-gradient(
+                    circle,
+                    rgba(255,255,255,0.15) 0px,
+                    rgba(255,255,255,0.15) 1px,
+                    rgba(0,0,0,0.15) 2px,
+                    rgba(0,0,0,0.15) 3px
+                );
+
+            /* аккуратная световая кромка + глубина */
             box-shadow:
-                0 0 0 1px rgba(255, 255, 255, 0.25),
-                inset 0 0 0 1px rgba(255, 255, 255, 0.35),
-                inset 0 0 6px rgba(0, 0, 0, 0.6);
+                inset 0 0 0 1px rgba(255,255,255,0.45),
+                inset 0 0 8px rgba(0,0,0,0.6),
+                0 0 2px rgba(255,255,255,0.4);
         }
 
         .vinyl::after {
@@ -253,8 +263,8 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 14%;
-            height: 14%;
+            width: 12%;
+            height: 12%;
             border-radius: 50%;
             box-shadow:
                 inset 0 0 0 1px rgba(255,255,255,0.35),

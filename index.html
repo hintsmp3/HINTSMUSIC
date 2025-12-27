@@ -1,10 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HINTS MUSIC</title>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Impact&display=swap" rel="stylesheet">
     <style>
         body {
@@ -18,22 +18,6 @@
                         url('IMG_7851.jpeg') center center / cover no-repeat fixed;
             position: relative;
             letter-spacing: 2px;
-            overflow: hidden;
-        }
-
-        #backgroundCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .content {
-            position: relative;
-            z-index: 3;
         }
 
         h1 {
@@ -45,6 +29,8 @@
                 0 0 40px #ff69ff,
                 5px 5px 0 #000;
             animation: glow 3s infinite alternate;
+            position: relative;
+            z-index: 3;
             transition: all 0.4s ease;
         }
 
@@ -168,7 +154,7 @@
             text-shadow: 0 0 20px #fff;
         }
 
-        /* Кастомный плеер */
+        /* Кастомный плеер — улучшенный */
         .custom-player {
             position: fixed;
             bottom: 30px;
@@ -347,45 +333,41 @@
     </style>
 </head>
 <body>
-    <!-- Аудиореактивный шейдер-фон поверх оригинального background -->
-    <canvas id="backgroundCanvas"></canvas>
 
-    <div class="content">
-        <h1>HINTS MUSIC</h1>
+    <h1>HINTS MUSIC</h1>
 
-        <div class="news" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
-            <img src="IMG_7561.jpeg" alt="News image" class="news-img">
-            <div class="news-text">
-                <h2>Event</h2>
-                <p>12.20.2025<br>HINTS</p>
-                <p>New era soon</p>
-            </div>
-        </div>
-
-        <div class="releases">
-            <div class="release" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
-                <img src="IMG_7852.jpeg" alt="Nazareth">
-                <p>Slut Online, lindtayl0r - Nazareth</p>
-            </div>
-
-            <div class="release" onclick="playTrack('track2.mp3', 'Sex & Limbo', 'Slut Online, lindtayl0r', 'IMG_7855.jpeg')">
-                <img src="IMG_7855.jpeg" alt="Sex & Limbo">
-                <p>Slut Online, lindtayl0r - Sex & Limbo</p>
-            </div>
-
-            <div class="release" onclick="playTrack('track3.mp3', 'SPACEDUST', 'Unknown', 'IMG_7856.jpeg')">
-                <img src="IMG_7856.jpeg" alt="SPACEDUST">
-                <p>SPACEDUST</p>
-            </div>
-
-            <div class="release" onclick="playTrack('track4.mp3', 'Interstellar', 'XSDC', 'IMG_7857.jpeg')">
-                <img src="IMG_7857.jpeg" alt="Interstellar">
-                <p>XSDC - Interstellar</p>
-            </div>
+    <div class="news" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
+        <img src="IMG_7561.jpeg" alt="News image" class="news-img">
+        <div class="news-text">
+            <h2>Event</h2>
+            <p>12.20.2025<br>HINTS</p>
+            <p>New era soon</p>
         </div>
     </div>
 
-    <!-- Кастомный плеер -->
+    <div class="releases">
+        <div class="release" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
+            <img src="IMG_7852.jpeg" alt="Nazareth">
+            <p>Slut Online, lindtayl0r - Nazareth</p>
+        </div>
+
+        <div class="release" onclick="playTrack('track2.mp3', 'Sex & Limbo', 'Slut Online, lindtayl0r', 'IMG_7855.jpeg')">
+            <img src="IMG_7855.jpeg" alt="Sex & Limbo">
+            <p>Slut Online, lindtayl0r - Sex & Limbo</p>
+        </div>
+
+        <div class="release" onclick="playTrack('track3.mp3', 'SPACEDUST', 'Unknown', 'IMG_7856.jpeg')">
+            <img src="IMG_7856.jpeg" alt="SPACEDUST">
+            <p>SPACEDUST</p>
+        </div>
+
+        <div class="release" onclick="playTrack('track4.mp3', 'Interstellar', 'XSDC', 'IMG_7857.jpeg')">
+            <img src="IMG_7857.jpeg" alt="Interstellar">
+            <p>XSDC - Interstellar</p>
+        </div>
+    </div>
+
+    <!-- Кастомный плеер — улучшенный layout -->
     <div class="custom-player" id="customPlayer">
         <img src="IMG_7851.jpeg" alt="Cover" class="track-cover" id="trackCover">
 
@@ -410,124 +392,10 @@
     </div>
 
     <!-- Скрытый аудио -->
-    <audio id="audioPlayer" loop crossorigin="anonymous"></audio>
+    <audio id="audioPlayer" loop></audio>
 
     <script>
-        // Three.js аудиореактивный шейдер (добавлен ПОВЕРХ оригинального фона)
-        const canvas = document.getElementById('backgroundCanvas');
-        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-
-        const scene = new THREE.Scene();
-        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-
-        const vertexShader = `
-            varying vec2 vUv;
-            void main() {
-                vUv = uv;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `;
-
-        const fragmentShader = `
-            uniform float iTime;
-            uniform float bass;
-            uniform float mid;
-            uniform float treble;
-            varying vec2 vUv;
-
-            void main() {
-                vec2 uv = vUv - 0.5;
-                uv *= 2.0;
-
-                float dist = length(uv);
-                float angle = atan(uv.y, uv.x);
-
-                float wave = sin(dist * 12.0 - iTime * 6.0 + bass * 8.0) * 0.08;
-                wave += sin(angle * 10.0 + iTime * 3.0 + mid * 5.0) * 0.05;
-                wave += cos(dist * 25.0 + iTime * 10.0 + treble * 6.0) * 0.03;
-
-                vec3 color = vec3(1.0, 0.4, 1.0);
-                color = mix(color, vec3(1.0, 0.7, 1.0), sin(dist * 4.0 + iTime * 2.0 + bass));
-                color *= (1.0 - dist * 0.6);
-                color += wave * vec3(1.0, 0.5, 1.2) * (bass + mid + treble) * 1.5;
-
-                float intensity = bass + mid + treble;
-                float alpha = 0.4 + intensity * 0.4; // от 0.4 до ~0.8
-
-                gl_FragColor = vec4(color, alpha);
-            }
-        `;
-
-        const uniforms = {
-            iTime: { value: 0 },
-            bass: { value: 0 },
-            mid: { value: 0 },
-            treble: { value: 0 }
-        };
-
-        const material = new THREE.ShaderMaterial({
-            vertexShader,
-            fragmentShader,
-            uniforms,
-            transparent: true,
-            blending: THREE.AdditiveBlending
-        });
-
-        const geometry = new THREE.PlaneGeometry(2, 2);
-        const mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
-
-        function animate() {
-            requestAnimationFrame(animate);
-            uniforms.iTime.value += 0.012;
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // Audio player + реакция на звук
         const audio = document.getElementById('audioPlayer');
-        audio.crossOrigin = "anonymous";
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioCtx.createMediaElementSource(audio);
-        const analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 1024;
-        source.connect(analyser);
-        analyser.connect(audioCtx.destination);
-
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-
-        function updateAudioReaction() {
-            if (!audio.paused) {
-                analyser.getByteFrequencyData(dataArray);
-
-                let bass = 0, mid = 0, treble = 0;
-                for (let i = 0; i < bufferLength; i++) {
-                    if (i < bufferLength / 10) bass += dataArray[i];
-                    else if (i < bufferLength / 3) mid += dataArray[i];
-                    else treble += dataArray[i];
-                }
-                bass /= (bufferLength / 10);
-                mid /= (bufferLength / 3 - bufferLength / 10);
-                treble /= (bufferLength - bufferLength / 3);
-
-                uniforms.bass.value = bass / 255;
-                uniforms.mid.value = mid / 255;
-                uniforms.treble.value = treble / 255;
-            }
-
-            requestAnimationFrame(updateAudioReaction);
-        }
-        updateAudioReaction(); // запускаем всегда, даже если музыка не играет (плавный idle)
-
-        // Остальная логика плеера (без изменений)
         const customPlayer = document.getElementById('customPlayer');
         const trackCover = document.getElementById('trackCover');
         const trackTitle = document.getElementById('trackTitle');
@@ -552,7 +420,6 @@
                     updatePlayPause();
                     trackCover.classList.add('playing');
                     customPlayer.classList.add('visible');
-                    if (audioCtx.state === 'suspended') audioCtx.resume();
                 });
             } else {
                 audio.play().then(() => {
@@ -577,7 +444,6 @@
                 audio.play();
                 isPlaying = true;
                 trackCover.classList.add('playing');
-                if (audioCtx.state === 'suspended') audioCtx.resume();
             }
             updatePlayPause();
         });
@@ -627,5 +493,8 @@
             }
         });
     </script>
+
 </body>
 </html>
+
+

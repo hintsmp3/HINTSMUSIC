@@ -217,7 +217,7 @@
             object-fit: cover;
             border-radius: 50%;
             transition: all 0.5s ease;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 9px 27px rgba(0, 0, 0, 0.3);
         }
 
         /* === VINYL HOLE EFFECT === */
@@ -268,7 +268,7 @@
             border-radius: 50%;
             box-shadow:
                 inset 0 0 0 1px rgba(255,255,255,0.35),
-                inset 0 0 8px rgba(0,0,0,0.6),
+                inset 0 0 8px rgba(0,0,0,0.4),
                 0 0 6px rgba(0,0,0,0.4);
             transform: translate(-50%, -50%);
             pointer-events: none;
@@ -277,7 +277,7 @@
 
         .release:hover img {
             border-color: #ff69ff;
-            box-shadow: 0 0 50px rgba(255, 105, 255, 0.8);
+            box-shadow: 0 0 50px rgba(255, 105, 255, 0.6);
             filter: brightness(1.2);
         }
 
@@ -306,7 +306,7 @@
             backdrop-filter: blur(20px);
             border-radius: 55px;
             padding: 20px 30px;
-            box-shadow: 0 20px 50px rgba(255, 105, 255, 0.5);
+            box-shadow: 0 20px 50px rgba(255, 105, 255, 0.3);
             display: flex;
             align-items: center;
             gap: 25px;
@@ -732,10 +732,14 @@
                 float rings = sin(displacedDist * 11.1 - u_time * 4.2 + bassReact * 20.0) * 0.5 + 0.3;
                 rings += sin(displacedDist * 25.0 + u_time * 2.5) * 0.3;
                 rings = pow(rings, 2.0);
+                // === Мягкая интерференция для глубины ===
+                float softRings = sin(displacedDist * 6.0 - u_time * 1.6) * 0.5 + 0.5;
+                softRings *= smoothstep(0.9, 0.2, displacedDist);
 
                 // === Вортекс ===
                 float twist = displacedAngle + u_time * 0.42 + bassReact * 3.1;
                 vec3 color = mix(pink, hotpink, sin(twist * 2.0) * 0.5 + 0.5);
+                color = mix(color, magenta, softRings * 0.35);
                 color = mix(color, cyan, sin(twist * 3.0 + 1.0) * 0.5 + 0.5);
 
                 // === Центровой glow ===
@@ -750,11 +754,15 @@
                 color = mix(color, white, centerGlow * 0.7);
                 color = mix(color, purple, waves * 0.6);
 
-                float pulse = 0.7 + 0.6 * sin(u_time * 0.7 + displacedDist * 2.0) + bassReact * 1.5;
+                float pulse = 0.85 + 0.25 * sin(u_time * 0.6 + displacedDist * 1.8);
+                pulse += bassReact * 0.6;
                 color *= pulse;
 
                 color += vec3(1.0, 0.5, 1.0) * rings * bassReact * 2.0;
                 color += white * centerGlow * bassReact * 1.5;
+
+                // === Финальный воздушный лифт ===
+                color += vec3(0.08, 0.04, 0.08) * (0.6 + bassReact);
 
                 color = clamp(color, 0.0, 1.0);
                 gl_FragColor = vec4(color, 1.0);

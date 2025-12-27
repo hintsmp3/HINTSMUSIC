@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -7,17 +6,75 @@
     <title>HINTS MUSIC</title>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Impact&display=swap" rel="stylesheet">
     <style>
-        body {
+        * {
             margin: 0;
-            padding: 0 0 140px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
             min-height: 100vh;
             font-family: 'Bebas Neue', 'Impact', 'Arial Black', sans-serif;
             color: #fff;
             text-align: center;
-            background: linear-gradient(rgba(255, 105, 255, 0.75), rgba(255, 200, 255, 0.65)),
-                        url('IMG_7851.jpeg') center center / cover no-repeat fixed;
+            background: #000;
             position: relative;
             letter-spacing: 2px;
+            overflow-x: hidden;
+        }
+
+        /* WebGL Canvas фон */
+        #glCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Слой контента */
+        .content-layer {
+            position: relative;
+            z-index: 2;
+            padding: 0 0 140px;
+        }
+
+        /* Частицы */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(255, 105, 255, 0.8);
+            border-radius: 50%;
+            animation: float linear infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(1);
+                opacity: 0;
+            }
         }
 
         h1 {
@@ -35,11 +92,16 @@
         }
 
         @keyframes glow {
-            from { text-shadow: 0 0 20px #ffffff, 0 0 40px #ff69ff, 5px 5px 0 #000; }
-            to { text-shadow: 0 0 40px #ffffff, 0 0 80px #ff69ff, 8px 8px 0 #000; }
+            from { 
+                text-shadow: 0 0 20px #ffffff, 0 0 40px #ff69ff, 5px 5px 0 #000;
+                transform: scale(1);
+            }
+            to { 
+                text-shadow: 0 0 40px #ffffff, 0 0 80px #ff69ff, 8px 8px 0 #000;
+                transform: scale(1.05);
+            }
         }
 
-        /* Новости */
         .news {
             position: relative;
             max-width: 1200px;
@@ -47,13 +109,14 @@
             margin: 0 auto 100px;
             border-radius: 30px;
             overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 20px 60px rgba(255, 105, 255, 0.4);
             cursor: pointer;
-            transition: transform 0.5s ease;
+            transition: transform 0.5s ease, box-shadow 0.5s ease;
         }
 
         .news:hover {
             transform: scale(1.03);
+            box-shadow: 0 30px 80px rgba(255, 105, 255, 0.7);
         }
 
         .news-img {
@@ -61,10 +124,12 @@
             height: auto;
             display: block;
             transition: transform 0.6s ease;
+            filter: brightness(0.8);
         }
 
         .news:hover .news-img {
             transform: scale(1.1);
+            filter: brightness(1);
         }
 
         .news::after {
@@ -91,7 +156,7 @@
             font-family: 'Bebas Neue', 'Impact', sans-serif;
             font-size: 4.5em;
             margin: 0 0 15px;
-            text-shadow: 0 0 20px #000, 0 6px 15px #000;
+            text-shadow: 0 0 20px #ff69ff, 0 6px 15px #000;
             letter-spacing: 3px;
         }
 
@@ -104,7 +169,6 @@
             letter-spacing: 2px;
         }
 
-        /* Релизы */
         .releases {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -118,11 +182,30 @@
 
         .release {
             cursor: pointer;
-            transition: all 0.5s ease;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+        }
+
+        .release::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: radial-gradient(circle, rgba(255, 105, 255, 0.3), transparent);
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: -1;
+        }
+
+        .release:hover::before {
+            opacity: 1;
         }
 
         .release:hover {
-            transform: scale(1.2) translateY(-15px) rotate(6deg);
+            transform: scale(1.15) translateY(-15px) rotate(3deg);
         }
 
         .release img {
@@ -136,8 +219,9 @@
         }
 
         .release:hover img {
-            border-color: #ffffff;
-            box-shadow: 0 0 50px rgba(255, 255, 255, 0.8);
+            border-color: #ff69ff;
+            box-shadow: 0 0 50px rgba(255, 105, 255, 0.8);
+            filter: brightness(1.2);
         }
 
         .release p {
@@ -151,10 +235,9 @@
 
         .release:hover p {
             transform: scale(1.1);
-            text-shadow: 0 0 20px #fff;
+            text-shadow: 0 0 20px #ff69ff;
         }
 
-        /* Кастомный плеер — улучшенный */
         .custom-player {
             position: fixed;
             bottom: 30px;
@@ -162,17 +245,18 @@
             transform: translateX(-50%) translateY(150px);
             width: 90%;
             max-width: 900px;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(20px);
             border-radius: 50px;
             padding: 20px 30px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 20px 50px rgba(255, 105, 255, 0.5);
             display: flex;
             align-items: center;
             gap: 25px;
             z-index: 10;
             transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.8s ease;
             opacity: 0;
+            border: 2px solid rgba(255, 105, 255, 0.3);
         }
 
         .custom-player.visible {
@@ -187,6 +271,7 @@
             object-fit: cover;
             box-shadow: 0 0 40px rgba(255, 105, 255, 0.6);
             animation: rotate 20s linear infinite paused;
+            border: 3px solid #ff69ff;
         }
 
         .track-cover.playing {
@@ -208,7 +293,7 @@
             font-family: 'Bebas Neue', 'Impact', sans-serif;
             font-size: 2.2em;
             margin: 0;
-            text-shadow: 0 2px 10px #000;
+            text-shadow: 0 2px 10px #ff69ff;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -240,11 +325,13 @@
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s;
+            border: 2px solid rgba(255, 105, 255, 0.6);
         }
 
         .play-pause:hover {
-            background: rgba(255, 105, 255, 0.6);
+            background: rgba(255, 105, 255, 0.7);
             transform: scale(1.15);
+            box-shadow: 0 0 30px rgba(255, 105, 255, 0.8);
         }
 
         .play-pause svg {
@@ -269,25 +356,18 @@
             background: linear-gradient(90deg, #ff69ff, #ffccff);
             border-radius: 4px;
             transition: width 0.1s linear;
+            box-shadow: 0 0 10px rgba(255, 105, 255, 0.8);
         }
 
-        .time-left {
+        .time-left, .time-right {
             font-family: 'Bebas Neue', sans-serif;
             font-size: 1.3em;
             min-width: 70px;
-            text-align: left;
-            margin-right: 15px;
         }
 
-        .time-right {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.3em;
-            min-width: 70px;
-            text-align: right;
-            margin-left: 15px;
-        }
+        .time-left { text-align: left; margin-right: 15px; }
+        .time-right { text-align: right; margin-left: 15px; }
 
-        /* Мобильная адаптация */
         @media (max-width: 768px) {
             h1 { font-size: 4em; }
             .news-text h2 { font-size: 3em; }
@@ -300,10 +380,7 @@
                 gap: 20px;
             }
 
-            .track-info {
-                text-align: center;
-            }
-
+            .track-info { text-align: center; }
             .track-title { font-size: 2em; }
             .track-artist { font-size: 1.3em; }
 
@@ -334,67 +411,74 @@
 </head>
 <body>
 
-    <h1>HINTS MUSIC</h1>
+    <!-- WebGL Canvas -->
+    <canvas id="glCanvas"></canvas>
 
-    <div class="news" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
-        <img src="IMG_7561.jpeg" alt="News image" class="news-img">
-        <div class="news-text">
-            <h2>Event</h2>
-            <p>12.20.2025<br>HINTS</p>
-            <p>New era soon</p>
-        </div>
-    </div>
+    <!-- Частицы -->
+    <div class="particles" id="particles"></div>
 
-    <div class="releases">
-        <div class="release" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
-            <img src="IMG_7852.jpeg" alt="Nazareth">
-            <p>Slut Online, lindtayl0r - Nazareth</p>
-        </div>
+    <div class="content-layer">
+        <h1 id="mainTitle">HINTS MUSIC</h1>
 
-        <div class="release" onclick="playTrack('track2.mp3', 'Sex & Limbo', 'Slut Online, lindtayl0r', 'IMG_7855.jpeg')">
-            <img src="IMG_7855.jpeg" alt="Sex & Limbo">
-            <p>Slut Online, lindtayl0r - Sex & Limbo</p>
+        <div class="news" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
+            <img src="IMG_7561.jpeg" alt="News image" class="news-img">
+            <div class="news-text">
+                <h2>Event</h2>
+                <p>12.20.2025<br>HINTS</p>
+                <p>New era soon</p>
+            </div>
         </div>
 
-        <div class="release" onclick="playTrack('track3.mp3', 'SPACEDUST', 'Unknown', 'IMG_7856.jpeg')">
-            <img src="IMG_7856.jpeg" alt="SPACEDUST">
-            <p>SPACEDUST</p>
-        </div>
-
-        <div class="release" onclick="playTrack('track4.mp3', 'Interstellar', 'XSDC', 'IMG_7857.jpeg')">
-            <img src="IMG_7857.jpeg" alt="Interstellar">
-            <p>XSDC - Interstellar</p>
-        </div>
-    </div>
-
-    <!-- Кастомный плеер — улучшенный layout -->
-    <div class="custom-player" id="customPlayer">
-        <img src="IMG_7851.jpeg" alt="Cover" class="track-cover" id="trackCover">
-
-        <div class="track-info">
-            <h3 class="track-title" id="trackTitle">HINTS MUSIC</h3>
-            <p class="track-artist" id="trackArtist">Intro</p>
-        </div>
-
-        <div class="controls">
-            <div class="play-pause" id="playPause">
-                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        <div class="releases">
+            <div class="release" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
+                <img src="IMG_7852.jpeg" alt="Nazareth">
+                <p>Slut Online, lindtayl0r - Nazareth</p>
             </div>
 
-            <div class="progress-wrapper">
-                <div class="time-left" id="timeLeft">0:00</div>
-                <div class="progress-container" id="progressContainer">
-                    <div class="progress" id="progress"></div>
+            <div class="release" onclick="playTrack('track2.mp3', 'Sex & Limbo', 'Slut Online, lindtayl0r', 'IMG_7855.jpeg')">
+                <img src="IMG_7855.jpeg" alt="Sex & Limbo">
+                <p>Slut Online, lindtayl0r - Sex & Limbo</p>
+            </div>
+
+            <div class="release" onclick="playTrack('track3.mp3', 'SPACEDUST', 'Unknown', 'IMG_7856.jpeg')">
+                <img src="IMG_7856.jpeg" alt="SPACEDUST">
+                <p>SPACEDUST</p>
+            </div>
+
+            <div class="release" onclick="playTrack('track4.mp3', 'Interstellar', 'XSDC', 'IMG_7857.jpeg')">
+                <img src="IMG_7857.jpeg" alt="Interstellar">
+                <p>XSDC - Interstellar</p>
+            </div>
+        </div>
+
+        <div class="custom-player" id="customPlayer">
+            <img src="IMG_7851.jpeg" alt="Cover" class="track-cover" id="trackCover">
+
+            <div class="track-info">
+                <h3 class="track-title" id="trackTitle">HINTS MUSIC</h3>
+                <p class="track-artist" id="trackArtist">Intro</p>
+            </div>
+
+            <div class="controls">
+                <div class="play-pause" id="playPause">
+                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 </div>
-                <div class="time-right" id="timeRight">0:00</div>
+
+                <div class="progress-wrapper">
+                    <div class="time-left" id="timeLeft">0:00</div>
+                    <div class="progress-container" id="progressContainer">
+                        <div class="progress" id="progress"></div>
+                    </div>
+                    <div class="time-right" id="timeRight">0:00</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Скрытый аудио -->
     <audio id="audioPlayer" loop></audio>
 
     <script>
+        // === AUDIO SETUP ===
         const audio = document.getElementById('audioPlayer');
         const customPlayer = document.getElementById('customPlayer');
         const trackCover = document.getElementById('trackCover');
@@ -405,16 +489,32 @@
         const progress = document.getElementById('progress');
         const timeLeft = document.getElementById('timeLeft');
         const timeRight = document.getElementById('timeRight');
-        const h1 = document.querySelector('h1');
+        const h1 = document.getElementById('mainTitle');
 
         let isPlaying = false;
         let hasStartedPlaying = false;
 
+        // Audio Context для анализа
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        let audioSource = null;
+
         function playTrack(src, title, artist, cover) {
             audio.src = src;
 
+            if (!audioSource) {
+                audioSource = audioContext.createMediaElementSource(audio);
+                audioSource.connect(analyser);
+                analyser.connect(audioContext.destination);
+            }
+
             if (!hasStartedPlaying) {
                 audio.play().then(() => {
+                    audioContext.resume();
                     isPlaying = true;
                     hasStartedPlaying = true;
                     updatePlayPause();
@@ -423,6 +523,7 @@
                 });
             } else {
                 audio.play().then(() => {
+                    audioContext.resume();
                     isPlaying = true;
                     updatePlayPause();
                     trackCover.classList.add('playing');
@@ -442,6 +543,7 @@
                 trackCover.classList.remove('playing');
             } else {
                 audio.play();
+                audioContext.resume();
                 isPlaying = true;
                 trackCover.classList.add('playing');
             }
@@ -461,7 +563,6 @@
             if (audio.duration) {
                 const percent = (audio.currentTime / audio.duration) * 100;
                 progress.style.width = percent + '%';
-
                 timeLeft.textContent = formatTime(audio.currentTime);
                 timeRight.textContent = formatTime(audio.duration);
             }
@@ -492,9 +593,140 @@
                 lastScroll = window.scrollY;
             }
         });
+
+        // === WEBGL SHADER BACKGROUND ===
+        const canvas = document.getElementById('glCanvas');
+        const gl = canvas.getContext('webgl');
+
+        if (!gl) {
+            console.error('WebGL не поддерживается');
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const vertexShaderSource = `
+            attribute vec2 a_position;
+            void main() {
+                gl_Position = vec4(a_position, 0.0, 1.0);
+            }
+        `;
+
+        const fragmentShaderSource = `
+            precision mediump float;
+            uniform float u_time;
+            uniform vec2 u_resolution;
+            uniform float u_audio;
+
+            void main() {
+                vec2 uv = gl_FragCoord.xy / u_resolution;
+                vec3 color = vec3(0.0);
+                
+                float wave = sin(uv.x * 10.0 + u_time) * cos(uv.y * 10.0 + u_time * 0.5);
+                wave *= u_audio * 2.0;
+                
+                color += vec3(0.5 + 0.5 * sin(u_time + uv.x * 3.0), 
+                             0.3 + 0.3 * cos(u_time * 0.7), 
+                             0.8 + 0.2 * sin(u_time * 0.3 + uv.y * 2.0));
+                
+                color *= 0.3 + wave * 0.7;
+                color += vec3(1.0, 0.4, 1.0) * wave * 0.5;
+                
+                gl_FragColor = vec4(color, 1.0);
+            }
+        `;
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error(gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vertexShaderSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fragmentShaderSource);
+
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            console.error(gl.getProgramInfoLog(program));
+        }
+
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        const positions = new Float32Array([
+            -1, -1,
+             1, -1,
+            -1,  1,
+             1,  1,
+        ]);
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+        const positionLocation = gl.getAttribLocation(program, 'a_position');
+        const timeLocation = gl.getUniformLocation(program, 'u_time');
+        const resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
+        const audioLocation = gl.getUniformLocation(program, 'u_audio');
+
+        let startTime = Date.now();
+
+        function render() {
+            analyser.getByteFrequencyData(dataArray);
+            const average = dataArray.reduce((a, b) => a + b) / bufferLength / 255.0;
+
+            gl.clearColor(0, 0, 0, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            gl.useProgram(program);
+
+            gl.enableVertexAttribArray(positionLocation);
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+
+            gl.uniform1f(timeLocation, (Date.now() - startTime) / 1000.0);
+            gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+            gl.uniform1f(audioLocation, average);
+
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+            requestAnimationFrame(render);
+        }
+        render();
+
+        // === PARTICLES ===
+        const particlesContainer = document.getElementById('particles');
+        
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDuration = (Math.random() * 3 + 2) + 's';
+            particle.style.animationDelay = Math.random() * 2 + 's';
+            particlesContainer.appendChild(particle);
+
+            setTimeout(() => {
+                particle.remove();
+            }, 5000);
+        }
+
+        setInterval(() => {
+            if (isPlaying) {
+                createParticle();
+            }
+        }, 200);
     </script>
 
 </body>
 </html>
-
-

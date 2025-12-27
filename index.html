@@ -699,67 +699,84 @@
         `;
 
         const fragmentShaderSource = `
-            precision mediump float;
+            precision highp float;
+
             uniform float u_time;
             uniform vec2 u_resolution;
-            uniform float u_audio; // средняя громкость (0-1)
+            uniform float u_audio;
 
-            vec3 pink = vec3(1.0, 0.41, 1.0);
-            vec3 hotpink = vec3(1.0, 0.1, 0.8);
+            vec3 pink = vec3(1.0, 0.45, 1.0);
             vec3 magenta = vec3(1.0, 0.2, 0.9);
-            vec3 purple = vec3(0.7, 0.1, 1.0);
-            vec3 cyan = vec3(0.3, 1.0, 1.0);
+            vec3 purple = vec3(0.6, 0.15, 0.9);
+            vec3 cyan = vec3(0.3, 0.9, 1.0);
             vec3 white = vec3(1.0);
+
+            /* мягкий шум */
+            float hash(vec2 p) {
+                p = fract(p * vec2(123.34, 345.45));
+                p += dot(p, p + 34.345);
+                return fract(p.x * p.y);
+            }
+
+            float noise(vec2 p) {
+                vec2 i = floor(p);
+                vec2 f = fract(p);
+                f = f * f * (3.0 - 2.0 * f);
+
+                float a = hash(i);
+                float b = hash(i + vec2(1.0, 0.0));
+                float c = hash(i + vec2(0.0, 1.0));
+                float d = hash(i + vec2(1.0, 1.0));
+
+                return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+            }
 
             void main() {
                 vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-                vec2 centered = uv * 2.0 - 1.0;
-                centered.x *= u_resolution.x / u_resolution.y;
+                vec2 p = uv * 2.0 - 1.0;
+                p.x *= u_resolution.x / u_resolution.y;
 
-                float dist = length(centered);
-                float angle = atan(centered.y, centered.x);
+                float t = u_time * 0.35;
+                float audio = smoothstep(0.05, 0.6, u_audio);
 
-                // === Сильный бас-дисплейсмент ===
-                float bassReact = u_audio * u_audio * 2.5;
-                vec2 displace = centered * sin(dist * 10.0 - u_time * 3.0 + bassReact * 10.0) * bassReact * 0.15;
-                displace += centered * sin(angle * 6.0 + u_time * 1.5) * bassReact * 0.08;
+                /* плавный радиальный дрейф */
+                float r = length(p);
+                float a = atan(p.y, p.x);
 
-                vec2 displacedUV = centered + displace;
-                float displacedDist = length(displacedUV);
-                float displacedAngle = atan(displacedUV.y, displacedUV.x);
+                float swirl = sin(a * 2.0 + t) * 0.3;
+                p += normalize(p) * swirl * audio * 0.25;
 
-                // === Кольцевые волны ===
-                float rings = sin(displacedDist * 15.0 - u_time * 4.0 + bassReact * 20.0) * 0.5 + 0.5;
-                rings += sin(displacedDist * 25.0 + u_time * 2.5) * 0.3;
-                rings = pow(rings, 2.0);
+                /* органическое искажение */
+                float n = noise(p * 2.5 + t);
+                p += vec2(
+                    noise(p * 3.0 - t),
+                    noise(p * 3.0 + t)
+                ) * 0.15 * (0.3 + audio);
 
-                // === Вортекс ===
-                float twist = displacedAngle + u_time * 0.4 + bassReact * 5.0;
-                vec3 color = mix(pink, hotpink, sin(twist * 2.0) * 0.5 + 0.5);
-                color = mix(color, cyan, sin(twist * 3.0 + 1.0) * 0.5 + 0.5);
+                float d = length(p);
 
-                // === Центровой glow ===
-                float centerGlow = pow(1.0 - displacedDist, 3.0) * (1.0 + bassReact * 3.0);
+                /* мягкие кольца */
+                float rings = sin(d * 10.0 - t * 2.0);
+                rings = smoothstep(-0.4, 0.8, rings);
+                rings *= exp(-d * 1.8);
 
-                // === Волны ===
-                float waves = sin(displacedDist * 8.0 - u_time * 2.5 + bassReact * 8.0);
-                waves += cos(displacedDist * 12.0 + u_time * 1.8) * 0.6;
-                waves = waves * 0.5 + 0.5;
+                /* цветовой поток */
+                vec3 col = mix(pink, magenta, sin(a + t) * 0.5 + 0.5);
+                col = mix(col, cyan, n * 0.6);
+                col = mix(col, purple, smoothstep(0.3, 0.9, d));
 
-                color = mix(color, magenta, rings * (0.6 + bassReact));
-                color = mix(color, white, centerGlow * 0.7);
-                color = mix(color, purple, waves * 0.6);
+                /* центр */
+                float glow = exp(-d * 4.0) * (0.6 + audio * 1.5);
+                col += white * glow;
 
-                float pulse = 0.7 + 0.6 * sin(u_time * 0.7 + displacedDist * 2.0) + bassReact * 1.5;
-                color *= pulse;
+                /* дыхание */
+                float breath = 0.85 + 0.15 * sin(t * 1.2 + d * 2.0);
+                col *= breath;
 
-                color += vec3(1.0, 0.5, 1.0) * rings * bassReact * 2.0;
-                color += white * centerGlow * bassReact * 1.5;
-
-                color = clamp(color, 0.0, 1.0);
-                gl_FragColor = vec4(color, 1.0);
+                col = pow(col, vec3(0.95)); // мягкая гамма
+                gl_FragColor = vec4(col, 1.0);
             }
-        `;
+            `;
 
 
         function createShader(gl, type, source) {

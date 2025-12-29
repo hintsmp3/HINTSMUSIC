@@ -1108,16 +1108,29 @@
 
             void main() {
                 vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-                vec2 p = uv * 2.0 - 1.0;
+
+                // --- АНТИ-ЦЕНТР: разбиваем пространство на живые ячейки
+                float grid = 3.0;
+                vec2 cell = floor(uv * grid);
+                vec2 cellUV = fract(uv * grid);
+
+                // локальный псевдо-центр на каждую ячейку
+                vec2 localCenter = vec2(
+                    softNoise(cell + u_time * 0.07),
+                    softNoise(cell.yx - u_time * 0.05)
+                );
+
+                // координаты ОТНОСИТЕЛЬНО ЛОКАЛЬНОГО центра
+                vec2 p = cellUV - localCenter;
+
+                // компенсация аспекта
                 p.x *= u_resolution.x / u_resolution.y;
 
-                // --- микро-смещение системы координат (убивает физический центр)
-                vec2 pseudoCenter = vec2(
-                    softNoise(uv * 2.0 + u_time * 0.03),
-                    softNoise(uv.yx * 2.3 - u_time * 0.027)
-                ) - 0.5;
-
-                p += pseudoCenter * 0.18;
+                // дополнительный хаотический дрейф (убивает глобальную симметрию)
+                p += vec2(
+                    softNoise(p * 3.0 + u_time * 0.2),
+                    softNoise(p.yx * 2.7 - u_time * 0.18)
+                ) * 0.25;
 
                 // [2] Фрактальный шум-дрейф
                 float fn = 0.0;

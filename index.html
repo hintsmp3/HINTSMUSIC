@@ -173,6 +173,89 @@
             cursor: pointer;
             transition: transform 0.5s ease, box-shadow 0.5s ease;
         }
+        .news-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(20px);
+            z-index: 20;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .news-overlay.active {
+            display: flex;
+        }
+
+        .news-carousel {
+            position: relative;
+            width: 90%;
+            max-width: 1000px;
+            height: 70vh;
+            overflow: hidden;
+            box-shadow: 0 0 80px rgba(255,105,255,0.6);
+        }
+
+        .news-slides {
+            display: flex;
+            height: 100%;
+            transition: transform 0.6s ease;
+        }
+
+        .news-slide {
+            min-width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .news-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .slide-text {
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            text-align: left;
+            text-shadow: 0 4px 20px #000;
+        }
+
+        .slide-text h2 {
+            font-size: 4em;
+        }
+
+        .slide-text p {
+            font-size: 2em;
+        }
+
+        .news-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 4em;
+            background: none;
+            border: none;
+            color: #ff69ff;
+            cursor: pointer;
+            text-shadow: 0 0 20px #ff69ff;
+        }
+
+        .news-arrow.left { left: 20px; }
+        .news-arrow.right { right: 20px; }
+
+        .news-close {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 2.5em;
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+        }
 
         .news:hover {
             transform: scale(1.03);
@@ -617,12 +700,47 @@
     <div class="content-layer">
         <h1 id="mainTitle">HINTS MUSIC</h1>
 
-        <div class="news" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
+        <div class="news" id="newsBlock">
             <img src="IMG_7561.jpeg" alt="News image" class="news-img">
             <div class="news-text">
                 <h2>Event</h2>
                 <p>12.20.2025<br>HINTS</p>
                 <p>New era soon</p>
+            </div>
+        </div>
+
+        <div class="news-overlay" id="newsOverlay">
+            <div class="news-carousel">
+                <button class="news-close" id="newsClose">✕</button>
+
+                <div class="news-slides" id="newsSlides">
+                    <div class="news-slide active">
+                        <img src="IMG_7561.jpeg" alt="">
+                        <div class="slide-text">
+                            <h2>12.20.2025</h2>
+                            <p>HINTS EVENT<br>New era soon</p>
+                        </div>
+                    </div>
+
+                    <div class="news-slide">
+                        <img src="IMG_7852.jpeg" alt="">
+                        <div class="slide-text">
+                            <h2>RELEASE</h2>
+                            <p>Nazareth<br>Out now</p>
+                        </div>
+                    </div>
+
+                    <div class="news-slide">
+                        <img src="IMG_7855.jpeg" alt="">
+                        <div class="slide-text">
+                            <h2>UPDATE</h2>
+                            <p>More shows<br>soon</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="news-arrow left" id="newsPrev">‹</button>
+                <button class="news-arrow right" id="newsNext">›</button>
             </div>
         </div>
 
@@ -1103,6 +1221,46 @@
                 createParticle();
             }
         }, 200);
+    </script>
+
+    <script>
+    // === NEWS OVERLAY CAROUSEL ===
+    const newsBlock = document.getElementById('newsBlock');
+    const newsOverlay = document.getElementById('newsOverlay');
+    const slides = document.getElementById('newsSlides');
+    const prev = document.getElementById('newsPrev');
+    const next = document.getElementById('newsNext');
+    const closeBtn = document.getElementById('newsClose');
+
+    let slideIndex = 0;
+
+    function updateSlides() {
+        slides.style.transform = `translateX(-${slideIndex * 100}%)`;
+    }
+
+    newsBlock.addEventListener('click', () => {
+        newsOverlay.classList.add('active');
+    });
+
+    closeBtn.addEventListener('click', () => {
+        newsOverlay.classList.remove('active');
+    });
+
+    newsOverlay.addEventListener('click', (e) => {
+        if (e.target === newsOverlay) {
+            newsOverlay.classList.remove('active');
+        }
+    });
+
+    prev.addEventListener('click', () => {
+        slideIndex = Math.max(0, slideIndex - 1);
+        updateSlides();
+    });
+
+    next.addEventListener('click', () => {
+        slideIndex = Math.min(slides.children.length - 1, slideIndex + 1);
+        updateSlides();
+    });
     </script>
 
 </body>

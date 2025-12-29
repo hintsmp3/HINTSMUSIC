@@ -98,8 +98,8 @@
             width: 100%;
             height: 100%;
             z-index: 1;
-            opacity: 0.8;
-            mix-blend-mode: screen;
+            opacity: 0.65;
+            mix-blend-mode: lighten;
             pointer-events: none;
         }
 
@@ -1155,8 +1155,24 @@
                 // Финальное смягчение центра
                 color = mix(color, color * 0.85 + blurColor * 0.15, centerBlur * 0.4);
 
+                // --- Цветовой баланс в сторону красно‑розового спектра ---
+                vec3 redBias = vec3(1.15, 0.75, 0.9);
+                color *= redBias;
+
+                // Мягкое подавление белого клиппинга
+                float luminance = dot(color, vec3(0.299, 0.587, 0.114));
+                color = mix(color, vec3(luminance), 0.18);
+
+                // Усиление цвета в idle / спокойных местах
+                float idleBoost = smoothstep(0.0, 0.25, u_audio);
+                color = mix(color * 0.85, color * 1.25, idleBoost);
+
+                // Лёгкая сатурация
+                float avg = (color.r + color.g + color.b) / 3.0;
+                color = mix(vec3(avg), color, 1.35);
+
                 color = clamp(color, 0.0, 1.0);
-                gl_FragColor = vec4(color, 1.0);
+                gl_FragColor = vec4(color, 0.92);
             }
         `;
 

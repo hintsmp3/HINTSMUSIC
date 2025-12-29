@@ -39,6 +39,26 @@
             box-sizing: border-box;
         }
 
+        /* === IMMERSIVE / IDLE MODE === */
+        body.immersive .content-layer,
+        body.immersive .custom-player {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+        }
+
+        body.immersive {
+            cursor: none;
+        }
+
+        body.immersive #glCanvas {
+            opacity: 1;
+        }
+
+        body.immersive #grainCanvas {
+            opacity: 0.06;
+        }
+
         html, body {
             width: 100%;
             overflow-x: hidden;
@@ -649,7 +669,7 @@
             overflow: hidden;
             cursor: pointer;
             position: relative;
-            width: 240px;
+            width: 260px;
         }
 
         .progress {
@@ -707,7 +727,7 @@
             .progress-container {
                 flex: 1;
                 margin: 0 15px;
-                width: 180px;
+                width: 220px;
             }
         }
 
@@ -879,6 +899,10 @@
         let isPlaying = false;
         let hasStartedPlaying = false;
 
+        let idleTimer = null;
+        let immersive = false;
+        const IDLE_DELAY = 18000; // 18 секунд
+
         // Audio Context для анализа
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const analyser = audioContext.createAnalyser();
@@ -905,6 +929,7 @@
                     updatePlayPause();
                     trackCover.classList.add('playing');
                     customPlayer.classList.add('visible');
+                    resetIdleTimer();
                 });
             } else {
                 audio.play().then(() => {
@@ -912,6 +937,7 @@
                     isPlaying = true;
                     updatePlayPause();
                     trackCover.classList.add('playing');
+                    resetIdleTimer();
                 });
             }
 
@@ -947,7 +973,27 @@
                 trackCover.classList.add('playing');
             }
             updatePlayPause();
+            resetIdleTimer();
         });
+
+        function enterImmersive() {
+            if (!isPlaying || immersive) return;
+            immersive = true;
+            document.body.classList.add('immersive');
+        }
+
+        function exitImmersive() {
+            immersive = false;
+            document.body.classList.remove('immersive');
+            resetIdleTimer();
+        }
+
+        function resetIdleTimer() {
+            clearTimeout(idleTimer);
+            if (isPlaying) {
+                idleTimer = setTimeout(enterImmersive, IDLE_DELAY);
+            }
+        }
 
         function updatePlayPause() {
             const svg = playPause.querySelector('svg');
@@ -1283,6 +1329,17 @@
                 createParticle();
             }
         }, 200);
+
+        // === IMMERSIVE / IDLE MODE LISTENERS ===
+        ['mousemove', 'mousedown', 'touchstart', 'keydown'].forEach(evt => {
+            window.addEventListener(evt, () => {
+                if (immersive) {
+                    exitImmersive();
+                } else {
+                    resetIdleTimer();
+                }
+            }, { passive: true });
+        });
     </script>
 
     <script>

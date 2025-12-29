@@ -1146,14 +1146,16 @@
 
                 // === Сильный бас-дисплейсмент ===
                 float bassReact = u_audio * u_audio * 2.1;
-                // [4] Новый жидкий displace
-                vec2 displace = normalize(p) *
-                    softNoise(p*2.5 + u_time*0.6) *
-                    (0.35 + bassReact*1.2);
+                // [4] Новый жидкий displace (анти-радиальный)
+                vec2 displace = vec2(
+                    softNoise(p.yx * 2.2 + u_time * 0.5),
+                    softNoise(p.xy * 2.0 - u_time * 0.4)
+                ) * (0.28 + bassReact * 0.9);
                 displace += p * sin(angle * 6.0 + u_time * 1.5) * bassReact * 0.08;
 
                 vec2 displacedUV = p + displace;
-                float displacedDist = length(displacedUV);
+                float displacedDist = dot(abs(displacedUV), vec2(0.85, 1.15));
+                displacedDist += softNoise(displacedUV * 3.5 + u_time * 0.3) * 0.25;
                 float displacedAngle = atan(displacedUV.y, displacedUV.x);
 
                 // 2. Ломаем одинаковость колец
@@ -1171,7 +1173,8 @@
                 color = mix(color, cyan, sin(twist * 3.0 + 1.0) * 0.5 + 0.5);
 
                 // [3] Новый центр
-                float centerMask = exp(-pow(displacedDist * (0.9 + bass*0.8), 2.0));
+                float centerMask = exp(-pow(displacedDist * 0.6, 2.0));
+                centerMask = mix(centerMask, 1.0, 0.55);
                 float centerNoise = softNoise(p*3.0 + u_time*0.4);
                 float centerBlur = exp(-pow(displacedDist * 1.4, 2.0));
                 centerBlur *= 0.9 + centerNoise * 0.4;
@@ -1267,6 +1270,13 @@
                 float melt = smoothstep(0.15, 0.85, audio);
                 color = mix(color, blurColor, melt * 0.22);
                 color = mix(color, color * (0.9 + bass * 0.4), 0.6);
+
+                // [5] Добить остаточный фокус (мягкая пространственная деструкция)
+                vec2 antiFocus = vec2(
+                    softNoise(p * 1.8 + u_time * 0.2),
+                    softNoise(p * 2.1 - u_time * 0.25)
+                );
+                color = mix(color, blurColor, length(antiFocus) * 0.18);
 
                 color = clamp(color, 0.0, 1.0);
                 gl_FragColor = vec4(color, 0.85);

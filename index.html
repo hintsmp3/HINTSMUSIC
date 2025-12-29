@@ -1278,6 +1278,14 @@
                 );
                 color = mix(color, blurColor, length(antiFocus) * 0.18);
 
+                // --- микро-деконцентрация центра (аккуратно, поверх всего)
+                vec2 centerDrift = vec2(
+                    softNoise(p * 1.2 + u_time * 0.06),
+                    softNoise(p * 1.4 - u_time * 0.05)
+                );
+                float deFocus = smoothstep(0.0, 0.55, length(centerDrift));
+                color = mix(color, blurColor, deFocus * 0.06);
+
                 color = clamp(color, 0.0, 1.0);
                 gl_FragColor = vec4(color, 0.85);
             }

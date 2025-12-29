@@ -1,27 +1,3 @@
-    /* === IDLE / IMMERSION MODE === */
-    body.idle-mode {
-        cursor: none;
-    }
-
-    body.idle-mode .ui,
-    body.idle-mode .custom-player,
-    body.idle-mode header,
-    body.idle-mode .news,
-    body.idle-mode .controls,
-    body.idle-mode .track-info {
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 1.2s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-
-    body .ui,
-    body .custom-player,
-    body header,
-    body .news,
-    body .controls,
-    body .track-info {
-        transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-    }
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -666,14 +642,14 @@
         }
 
         .progress-container {
-            width: 240px;
-            flex: 0 0 240px;
+            flex: 1;
             height: 8px;
             background: rgba(255, 255, 255, 0.2);
             border-radius: 4px;
             overflow: hidden;
             cursor: pointer;
             position: relative;
+            width: 240px;
         }
 
         .progress {
@@ -729,9 +705,9 @@
             }
 
             .progress-container {
-                width: 180px;
-                flex: 0 0 180px;
+                flex: 1;
                 margin: 0 15px;
+                width: 180px;
             }
         }
 
@@ -929,8 +905,6 @@
                     updatePlayPause();
                     trackCover.classList.add('playing');
                     customPlayer.classList.add('visible');
-                    // === IDLE TIMER: reset on first play ===
-                    resetIdleTimer();
                 });
             } else {
                 audio.play().then(() => {
@@ -938,8 +912,6 @@
                     isPlaying = true;
                     updatePlayPause();
                     trackCover.classList.add('playing');
-                    // === IDLE TIMER: reset on play ===
-                    resetIdleTimer();
                 });
             }
 
@@ -973,8 +945,6 @@
                 audioContext.resume();
                 isPlaying = true;
                 trackCover.classList.add('playing');
-                // === IDLE TIMER: reset on play ===
-                resetIdleTimer();
             }
             updatePlayPause();
         });
@@ -1313,38 +1283,6 @@
                 createParticle();
             }
         }, 200);
-    // === IDLE / IMMERSION MODE LOGIC ===
-    let idleTimer = null;
-    const IDLE_DELAY = 18000; // 18 секунд
-
-    function enterIdleMode() {
-        if (!audio || audio.paused) return;
-        document.body.classList.add('idle-mode');
-    }
-
-    function exitIdleMode() {
-        document.body.classList.remove('idle-mode');
-        resetIdleTimer();
-    }
-
-    function resetIdleTimer() {
-        clearTimeout(idleTimer);
-        idleTimer = setTimeout(enterIdleMode, IDLE_DELAY);
-    }
-
-    // Слушатели активности
-    ['mousemove', 'mousedown', 'keydown', 'touchstart', 'wheel'].forEach(evt => {
-        window.addEventListener(evt, () => {
-            if (document.body.classList.contains('idle-mode')) {
-                exitIdleMode();
-            } else {
-                resetIdleTimer();
-            }
-        }, { passive: true });
-    });
-
-    // Сброс idle при старте проигрывания
-    audio.addEventListener('play', resetIdleTimer);
     </script>
 
     <script>

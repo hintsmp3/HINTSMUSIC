@@ -1142,15 +1142,14 @@
                 );
                 p += warp * (0.045 + bass * 0.18);
 
-                float angle = atan(p.y, p.x);
-                // --- Нерегулярное угловое поле (ломает симметрию по кругу)
-                float angularNoise = sin(angle * 5.0 + sin(u_time * 0.12)) *
-                                     cos(angle * 2.3 - u_time * 0.08);
-                angle += angularNoise * 0.35;
+                vec2 flowDir = normalize(vec2(
+                    softNoise(p * 1.3 + u_time * 0.11),
+                    softNoise(p.yx * 1.7 - u_time * 0.09)
+                ) * 2.0 - 1.0);
 
-                // 3. Добавляем МЕДЛЕННЫЙ разлом радиуса (форма «дышит», не пульсирует)
-                float radialDrift = sin(u_time * 0.09 + p.x * 1.7 + p.y * 1.3);
-                float dist = length(p + warp * 0.3) + radialDrift * 0.08;
+                float dist = dot(abs(p), vec2(0.9, 1.1));
+                dist += dot(p, flowDir) * 0.6;
+                dist += softNoise(p * 2.8 + u_time * 0.2) * 0.35;
 
                 // === Сильный бас-дисплейсмент ===
                 float bassReact = u_audio * u_audio * 2.1;
@@ -1164,7 +1163,7 @@
                 vec2 displacedUV = p + displace;
                 float displacedDist = dot(abs(displacedUV), vec2(0.85, 1.15));
                 displacedDist += softNoise(displacedUV * 3.5 + u_time * 0.3) * 0.25;
-                float displacedAngle = atan(displacedUV.y, displacedUV.x);
+                // float displacedAngle = atan(displacedUV.y, displacedUV.x);
 
                 // 2. Ломаем одинаковость колец
                 float ringNoise = sin(dist * 9.0 + sin(angle * 3.0) * 2.0 - u_time * 1.8);
@@ -1175,25 +1174,24 @@
                 softRings *= smoothstep(0.9, 0.2, displacedDist);
 
                 // === Вортекс ===
-                float twist = displacedAngle + u_time * 0.42 + bassReact * 3.1;
+                float twist = dot(displacedUV, flowDir) * 2.4 + u_time * 0.42 + bassReact * 3.1;
                 vec3 color = mix(pink, hotpink, sin(twist * 2.0) * 0.5 + 0.5);
                 color = mix(color, magenta, softRings * 0.35);
                 color = mix(color, cyan, sin(twist * 3.0 + 1.0) * 0.5 + 0.5);
 
                 // [3] Новый центр
-                float centerMask = exp(-pow(displacedDist * 0.6, 2.0));
-                centerMask = mix(centerMask, 1.0, 0.55);
+                // float centerMask = exp(-pow(displacedDist * 0.6, 2.0));
+                // centerMask = mix(centerMask, 1.0, 0.55);
                 float centerNoise = softNoise(p*3.0 + u_time*0.4);
-                float centerBlur = exp(-pow(displacedDist * 1.4, 2.0));
-                centerBlur *= 0.9 + centerNoise * 0.4;
+                // float centerBlur = exp(-pow(displacedDist * 1.4, 2.0));
+                // centerBlur *= 0.9 + centerNoise * 0.4;
 
                 // псевдо-блюр через цветовое растекание
                 vec3 blurColor = mix(magenta, white, 0.6);
                 blurColor = mix(blurColor, cyan, 0.3 + bassReact * 0.4);
 
                 // === Волны с локальной скоростью ===
-                float sector = sin(angle * 3.0 + u_time * 0.15);
-                float localSpeed = mix(1.0, 1.8, sector * 0.5 + 0.5);
+                float localSpeed = 1.0 + softNoise(p * 2.0 + u_time * 0.12) * 0.8;
 
                 float waves = sin(displacedDist * 7.0 * localSpeed - u_time * 2.1 + bassReact * 7.0);
                 waves += cos(displacedDist * 11.0 * localSpeed + u_time * 1.4) * 0.6;
@@ -1202,13 +1200,13 @@
                 color = mix(color, magenta, rings * (0.6 + bassReact));
 
                 // Тёплый центр вместо белого пересвета
-                vec3 warmCenter = vec3(1.0, 0.35, 0.6);
-                float centerGlow = pow(centerMask, 2.4) * (0.55 + bassReact * 1.1) * (1.0 + centerNoise);
-                color = mix(color, warmCenter, centerGlow * 0.45);
+                // vec3 warmCenter = vec3(1.0, 0.35, 0.6);
+                // float centerGlow = pow(centerMask, 2.4) * (0.55 + bassReact * 1.1) * (1.0 + centerNoise);
+                // color = mix(color, warmCenter, centerGlow * 0.45);
 
-                color = mix(color, white, centerGlow * 0.42);
+                // color = mix(color, white, centerGlow * 0.42);
                 // Подмешиваем туман в центре вместо жёсткого glow
-                color = mix(color, blurColor, centerBlur * (0.35 + bass * 1.2));
+                // color = mix(color, blurColor, centerBlur * (0.35 + bass * 1.2));
                 color = mix(color, purple, waves * 0.6);
 
                 float pulse = 0.85 + 0.25 * sin(u_time * 0.6 + displacedDist * 1.8);
@@ -1229,7 +1227,7 @@
                 color += vec3(0.08, 0.04, 0.08) * (0.6 + bassReact);
 
                 // Финальное смягчение центра
-                color = mix(color, color * 0.85 + blurColor * 0.15, centerBlur * 0.4);
+                // color = mix(color, color * 0.85 + blurColor * 0.15, centerBlur * 0.4);
 
                 // --- Цветовой баланс в сторону красно‑розового спектра ---
                 vec3 redBias = vec3(1.15, 0.75, 0.9);
@@ -1267,7 +1265,7 @@
                 color = mix(color, color + blur * 0.08, 0.65);
 
                 // [5] Псевдо-блюр по экрану (edge fade)
-                float edgeFade = smoothstep(1.2, 0.2, length(p));
+                float edgeFade = smoothstep(1.2, 0.2, dot(abs(p), vec2(1.0)));
                 color = mix(color, color*0.7 + blurColor*0.3, 1.0-edgeFade);
 
                 // [6] Финальное подавление резких структур
@@ -1293,7 +1291,7 @@
                 );
                 float deFocus = smoothstep(0.0, 0.55, length(centerDrift));
                 color = mix(color, blurColor, deFocus * 0.06);
-                color = mix(color, blurColor, centerMask * 0.035);
+                // color = mix(color, blurColor, centerMask * 0.035);
 
                 color = clamp(color, 0.0, 1.0);
                 gl_FragColor = vec4(color, 0.85);

@@ -1172,12 +1172,10 @@
                 color = mix(color, magenta, softRings * 0.35);
                 color = mix(color, cyan, sin(twist * 3.0 + 1.0) * 0.5 + 0.5);
 
-                // [3] Новый центр
-                float centerMask = exp(-pow(displacedDist * 0.6, 2.0));
-                centerMask = mix(centerMask, 1.0, 0.55);
-                float centerNoise = softNoise(p*3.0 + u_time*0.4);
-                float centerBlur = exp(-pow(displacedDist * 1.4, 2.0));
-                centerBlur *= 0.9 + centerNoise * 0.4;
+                // [3] Новый центр -> центр как туман (fog)
+                float centerFog = smoothstep(0.0, 1.4, displacedDist);
+                float fogNoise = softNoise(p*2.0 + u_time*0.25);
+                centerFog *= 0.85 + fogNoise * 0.3;
 
                 // псевдо-блюр через цветовое растекание
                 vec3 blurColor = mix(magenta, white, 0.6);
@@ -1200,7 +1198,7 @@
 
                 color = mix(color, white, centerGlow * 0.7);
                 // Подмешиваем туман в центре вместо жёсткого glow
-                color = mix(color, blurColor, centerBlur * (0.35 + bass * 1.2));
+                color = mix(color, blurColor, centerFog * (0.28 + bass * 0.9));
                 color = mix(color, purple, waves * 0.6);
 
                 float pulse = 0.85 + 0.25 * sin(u_time * 0.6 + displacedDist * 1.8);
@@ -1268,8 +1266,9 @@
 
                 // --- Аудио-реактивный раствор и усиление ---
                 float melt = smoothstep(0.15, 0.85, audio);
-                color = mix(color, blurColor, melt * 0.22);
-                color = mix(color, color * (0.9 + bass * 0.4), 0.6);
+                color = mix(color, blurColor, melt * 0.18);
+                float energy = 0.6 + bass * 0.5;
+                color = color / (color + vec3(energy));
 
                 // [5] Добить остаточный фокус (мягкая пространственная деструкция)
                 vec2 antiFocus = vec2(
@@ -1278,6 +1277,9 @@
                 );
                 color = mix(color, blurColor, length(antiFocus) * 0.18);
 
+                // Дополнительное «ослепление» центра без высветления (контраст → туман)
+                float centerKill = smoothstep(0.0, 1.0, displacedDist);
+                color = mix(color, blurColor, centerKill * 0.15);
                 color = clamp(color, 0.0, 1.0);
                 gl_FragColor = vec4(color, 0.85);
             }

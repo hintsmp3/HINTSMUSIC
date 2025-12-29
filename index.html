@@ -1087,13 +1087,23 @@
             vec3 white = vec3(1.0);
 
             // [1] Новый softNoise
+            float hash(vec2 p){
+                p = fract(p * vec2(123.34, 456.21));
+                p += dot(p, p + 45.32);
+                return fract(p.x * p.y);
+            }
+
             float softNoise(vec2 p){
-                float n = 0.0;
-                n += sin(p.x*1.3 + p.y*1.7);
-                n += sin(p.x*2.1 - p.y*1.1);
-                n += sin(p.x*3.7 + p.y*2.9);
-                n += sin(length(p)*4.5);
-                return n * 0.12;
+                vec2 i = floor(p);
+                vec2 f = fract(p);
+                f = f*f*(3.0-2.0*f);
+
+                float a = hash(i);
+                float b = hash(i + vec2(1.0, 0.0));
+                float c = hash(i + vec2(0.0, 1.0));
+                float d = hash(i + vec2(1.0, 1.0));
+
+                return mix(mix(a, b, f.x), mix(c, d, f.x), f.y) * 0.9;
             }
 
             void main() {
@@ -1105,8 +1115,8 @@
                 float fn = 0.0;
                 vec2 fp = p;
                 for(int i=0;i<4;i++){
-                    fn += softNoise(fp + u_time*0.05);
-                    fp *= 1.7;
+                    fn += softNoise(fp + u_time*0.04) * (0.6 / float(i+1));
+                    fp = fp * 1.6 + 0.15;
                 }
                 p += fn * (0.14 + bass * 0.35);
 
@@ -1138,7 +1148,7 @@
                 float bassReact = u_audio * u_audio * 2.1;
                 // [4] Новый жидкий displace
                 vec2 displace = normalize(p) *
-                    softNoise(p*4.0 + u_time*0.8) *
+                    softNoise(p*2.5 + u_time*0.6) *
                     (0.35 + bassReact*1.2);
                 displace += p * sin(angle * 6.0 + u_time * 1.5) * bassReact * 0.08;
 
@@ -1255,8 +1265,8 @@
 
                 // --- Аудио-реактивный раствор и усиление ---
                 float melt = smoothstep(0.15, 0.85, audio);
-                color = mix(color, blurColor, melt * 0.25);
-                color *= 1.0 + bass * 0.35;
+                color = mix(color, blurColor, melt * 0.22);
+                color = mix(color, color * (0.9 + bass * 0.4), 0.6);
 
                 color = clamp(color, 0.0, 1.0);
                 gl_FragColor = vec4(color, 0.85);

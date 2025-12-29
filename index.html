@@ -1267,16 +1267,16 @@
                 color = mix(color, color + blur * 0.08, 0.65);
 
                 // [5] Псевдо-блюр по экрану (edge fade)
-                float edgeFade = smoothstep(1.2, 0.2, length(p));
-                color = mix(color, color*0.7 + blurColor*0.3, 1.0-edgeFade);
+                float edgeFade = smoothstep(1.4, 0.3, dot(abs(p), vec2(1.0)));
+                color = mix(color, color, edgeFade);
 
                 // [6] Финальное подавление резких структур
-                float structureKill = softNoise(p*6.0 + u_time)*0.15;
+                float structureKill = softNoise(p*6.0 + u_time)*0.08;
                 color = mix(color, vec3((color.r+color.g+color.b)/3.0), structureKill);
 
                 // --- Аудио-реактивный раствор и усиление ---
-                float melt = smoothstep(0.15, 0.85, audio);
-                color = mix(color, blurColor, melt * 0.22);
+                float melt = smoothstep(0.25, 0.9, audio);
+                color = mix(color, blurColor, melt * 0.12);
                 color = mix(color, color * (0.9 + bass * 0.4), 0.6);
 
                 // [5] Добить остаточный фокус (мягкая пространственная деструкция)
@@ -1296,7 +1296,7 @@
                 color = mix(color, blurColor, centerMask * 0.035);
 
                 color = clamp(color, 0.0, 1.0);
-                gl_FragColor = vec4(color, 0.85);
+                gl_FragColor = vec4(color * 1.35, 0.9);
             }
         `;
 

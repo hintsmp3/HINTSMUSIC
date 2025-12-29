@@ -1084,7 +1084,7 @@
             vec3 magenta = vec3(1.0, 0.2, 0.9);
             vec3 purple = vec3(0.7, 0.1, 1.0);
             vec3 cyan = vec3(0.3, 1.0, 1.0);
-            vec3 white = vec3(1.0);
+            vec3 white = vec3(0.95, 0.92, 0.97);
 
             // [1] Новый softNoise
             float hash(vec2 p){
@@ -1173,11 +1173,13 @@
                 color = mix(color, cyan, sin(twist * 3.0 + 1.0) * 0.5 + 0.5);
 
                 // [3] Новый центр
-                float centerMask = exp(-pow(displacedDist * 0.6, 2.0));
-                centerMask = mix(centerMask, 1.0, 0.55);
-                float centerNoise = softNoise(p*3.0 + u_time*0.4);
-                float centerBlur = exp(-pow(displacedDist * 1.4, 2.0));
-                centerBlur *= 0.9 + centerNoise * 0.4;
+                float centerMask = exp(-pow(displacedDist * 0.35, 2.0));
+                centerMask = smoothstep(0.0, 1.0, centerMask);
+
+                float centerNoise = softNoise(p * 2.2 + u_time * 0.25);
+
+                float centerBlur = exp(-pow(displacedDist * 0.75, 2.0));
+                centerBlur *= 0.6 + centerNoise * 0.3;
 
                 // псевдо-блюр через цветовое растекание
                 vec3 blurColor = mix(magenta, white, 0.6);
@@ -1193,12 +1195,13 @@
 
                 color = mix(color, magenta, rings * (0.6 + bassReact));
 
-                // Тёплый центр вместо белого пересвета
-                vec3 warmCenter = vec3(1.0, 0.35, 0.6);
-                float centerGlow = pow(centerMask, 2.4) * (0.55 + bassReact * 1.1) * (1.0 + centerNoise);
-                color = mix(color, warmCenter, centerGlow * 0.45);
+                // Тёплый растворённый центр без явного источника
+                vec3 warmCenter = vec3(1.0, 0.42, 0.68);
+                float centerGlow = pow(centerMask, 1.8) * (0.35 + bassReact * 0.8);
+                centerGlow *= 0.6 + centerNoise * 0.35;
 
-                color = mix(color, white, centerGlow * 0.7);
+                color = mix(color, warmCenter, centerGlow * 0.35);
+                color = mix(color, white, centerGlow * 0.18);
                 // Подмешиваем туман в центре вместо жёсткого glow
                 color = mix(color, blurColor, centerBlur * (0.35 + bass * 1.2));
                 color = mix(color, purple, waves * 0.6);
@@ -1278,7 +1281,8 @@
                 );
                 color = mix(color, blurColor, length(antiFocus) * 0.18);
 
-                color = clamp(color, 0.0, 1.0);
+                color = color / (color + vec3(1.2));
+                color = mix(color, blurColor, centerBlur * 0.22);
                 gl_FragColor = vec4(color, 0.85);
             }
         `;

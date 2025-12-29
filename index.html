@@ -67,15 +67,12 @@
 
         html, body {
             width: 100%;
-            overflow-x: hidden;
-        }
-
-        body {
             min-width: 320px;
+            min-height: 100vh;
+            overflow: hidden;
         }
 
         body {
-            min-height: 100vh;
             font-family: 'Bebas Neue', 'Impact', 'Arial Black', sans-serif;
             color: #fff;
             text-align: center;
@@ -83,21 +80,20 @@
                         url('IMG_7851.jpeg') center center / cover no-repeat scroll;
             position: relative;
             letter-spacing: 2px;
-            overflow-x: hidden;
         }
 
         /* WebGL Canvas поверх фона с прозрачностью */
         #glCanvas, #grainCanvas {
-            width: 100% !important;
-            height: 100% !important;
-        }
-
-        #glCanvas {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+        }
+
+        #glCanvas {
             z-index: 1;
             opacity: 0.65;
             mix-blend-mode: lighten;
@@ -105,8 +101,6 @@
         }
 
         #grainCanvas {
-            position: fixed;
-            inset: 0;
             z-index: 3;              /* выше glCanvas, ниже UI */
             pointer-events: none;
             mix-blend-mode: soft-light; /* можно soft-light */
@@ -1068,10 +1062,10 @@
 
         function resizeCanvas() {
             const dpr = window.devicePixelRatio || 1;
-            canvas.width = window.innerWidth * 1.2 * dpr;
-            canvas.height = window.innerHeight * 1.2 * dpr;
-            canvas.style.width = '120vw';
-            canvas.style.height = '120vh';
+            canvas.width = window.innerWidth * dpr;
+            canvas.height = window.innerHeight * dpr;
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
             gl.viewport(0, 0, canvas.width, canvas.height);
         }
         resizeCanvas();
@@ -1372,10 +1366,10 @@
 
         function resizeGrain() {
             const dpr = window.devicePixelRatio || 1;
-            grainCanvas.width = window.innerWidth * 1.2 * dpr;
-            grainCanvas.height = window.innerHeight * 1.2 * dpr;
-            grainCanvas.style.width = '120vw';
-            grainCanvas.style.height = '120vh';
+            grainCanvas.width = window.innerWidth * dpr;
+            grainCanvas.height = window.innerHeight * dpr;
+            grainCanvas.style.width = '100%';
+            grainCanvas.style.height = '100%';
             ggl.viewport(0, 0, grainCanvas.width, grainCanvas.height);
         }
         resizeGrain();

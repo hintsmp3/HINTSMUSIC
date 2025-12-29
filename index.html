@@ -1112,8 +1112,10 @@
                 color = mix(color, magenta, softRings * 0.35);
                 color = mix(color, cyan, sin(twist * 3.0 + 1.0) * 0.5 + 0.5);
 
-                // === Центровой glow ===
-                float centerGlow = pow(1.0 - displacedDist, 3.0) * (1.0 + bassReact * 3.0);
+                // === Центровой glow (анти‑пересвет) ===
+                float centerMask = smoothstep(0.0, 0.6, displacedDist);
+                centerMask = 1.0 - centerMask;
+                float centerGlow = pow(centerMask, 2.2) * (0.6 + bassReact * 1.2);
 
                 // === Мягкий блюр / туман в центре (убираем явную точку)
                 float centerBlur = smoothstep(0.0, 0.68, displacedDist);
@@ -1130,6 +1132,11 @@
                 waves = waves * 0.5 + 0.5;
 
                 color = mix(color, magenta, rings * (0.6 + bassReact));
+
+                // Тёплый центр вместо белого пересвета
+                vec3 warmCenter = vec3(1.0, 0.35, 0.6);
+                color = mix(color, warmCenter, centerGlow * 0.45);
+
                 color = mix(color, white, centerGlow * 0.7);
                 // Подмешиваем туман в центре вместо жёсткого glow
                 color = mix(color, blurColor, centerBlur * (0.35 + bassReact));
@@ -1140,7 +1147,7 @@
                 color *= pulse;
 
                 color += vec3(1.0, 0.5, 1.0) * rings * bassReact * 2.0;
-                color += white * centerGlow * bassReact * 1.5;
+                // Убрано: color += white * centerGlow * bassReact * 1.5;
 
                 // === Дополнительная аудио-реакция (пульс + цветовой сдвиг)
                 float audioPulse = sin(u_time * 2.0 + displacedDist * 6.0) * 0.5 + 0.5;
@@ -1161,7 +1168,7 @@
 
                 // Мягкое подавление белого клиппинга
                 float luminance = dot(color, vec3(0.299, 0.587, 0.114));
-                color = mix(color, vec3(luminance), 0.18);
+                color = mix(color, vec3(luminance), 0.08);
 
                 // Усиление цвета в idle / спокойных местах
                 float idleBoost = smoothstep(0.0, 0.25, u_audio);
@@ -1172,7 +1179,7 @@
                 color = mix(vec3(avg), color, 1.35);
 
                 color = clamp(color, 0.0, 1.0);
-                gl_FragColor = vec4(color, 0.92);
+                gl_FragColor = vec4(color, 0.85);
             }
         `;
 

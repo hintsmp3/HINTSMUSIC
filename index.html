@@ -1083,25 +1083,34 @@
 
             void main() {
                 vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-                vec2 centered = uv * 2.0 - 1.0;
-                centered.x *= u_resolution.x / u_resolution.y;
+                vec2 p = uv * 2.0 - 1.0;
+                p.x *= u_resolution.x / u_resolution.y;
 
-                float dist = length(centered);
-                float angle = atan(centered.y, centered.x);
+                // --- Органическая асимметрия ---
+                float t = u_time * 0.15;
+                vec2 warp = vec2(
+                    sin(p.y * 3.7 + t),
+                    cos(p.x * 4.1 - t)
+                );
+                p += warp * 0.06;
+
+                float angle = atan(p.y, p.x);
+                // 4. (Очень важно) Чуть убираем «идеальный центр»
+                float dist = length(p + warp * 0.3);
 
                 // === Сильный бас-дисплейсмент ===
                 float bassReact = u_audio * u_audio * 2.1;
-                vec2 displace = centered * sin(dist * 10.0 - u_time * 3.1 + bassReact * 10.0) * bassReact * 0.11;
-                displace += centered * sin(angle * 6.0 + u_time * 1.5) * bassReact * 0.08;
+                vec2 displace = p * sin(dist * 10.0 - u_time * 3.1 + bassReact * 10.0) * bassReact * 0.11;
+                displace += p * sin(angle * 6.0 + u_time * 1.5) * bassReact * 0.08;
 
-                vec2 displacedUV = centered + displace;
+                vec2 displacedUV = p + displace;
                 float displacedDist = length(displacedUV);
                 float displacedAngle = atan(displacedUV.y, displacedUV.x);
 
-                // === Кольцевые волны ===
-                float rings = sin(displacedDist * 11.1 - u_time * 4.2 + bassReact * 20.0) * 0.5 + 0.3;
-                rings += sin(displacedDist * 25.0 + u_time * 2.5) * 0.3;
-                rings = pow(rings, 2.0);
+                // 2. Ломаем одинаковость колец
+                float ringNoise = sin(dist * 9.0 + sin(angle * 3.0) * 2.0 - u_time * 1.8);
+                float rings = smoothstep(-0.4, 0.6, ringNoise);
+
                 // === Мягкая интерференция для глубины ===
                 float softRings = sin(displacedDist * 6.0 - u_time * 1.6) * 0.5 + 0.5;
                 softRings *= smoothstep(0.9, 0.2, displacedDist);
@@ -1177,6 +1186,10 @@
                 // Лёгкая сатурация
                 float avg = (color.r + color.g + color.b) / 3.0;
                 color = mix(vec3(avg), color, 1.35);
+
+                // 3. Добавляем медленный дрейф формы (жизнь в idle)
+                float drift = sin(u_time * 0.25 + p.x * 2.0) * cos(u_time * 0.18 + p.y * 1.7);
+                color *= 1.0 + drift * 0.08;
 
                 color = clamp(color, 0.0, 1.0);
                 gl_FragColor = vec4(color, 0.85);

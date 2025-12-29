@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HINTS MUSIC</title>
     <!-- === SEO / META === -->
-    <meta name="description" content="HINTS MUSIC — независимый музыкальный лейбл. Новые релизы: Nazareth, Sex & Limbo, SPACEDUST, Interstellar. Электронная музыка, hyperpop, экспериментал.">
-    <meta name="keywords" content="HINTS MUSIC, музыкальный лейбл, Slut Online, lindtayl0r, Nazareth, Sex & Limbo, SPACEDUST, Interstellar, электронная музыка, hyperpop">
+    <meta name="description" content="HINTS MUSIC is an independent music label. New releases: Nazareth, Sex & Limbo, SPACEDUST, Interstellar. Electronic music, hyperpop, experimental.">
+    <meta name="keywords" content="HINTS MUSIC, music label, Slut Online, lindtayl0r, Nazareth, Sex & Limbo, SPACEDUST, Interstellar, electronic music, hyperpop">
 
     <!-- Open Graph -->
     <meta property="og:title" content="HINTS MUSIC — Новый этап электронной музыки">
@@ -246,26 +246,9 @@
             position: relative;
         }
 
-        .release::before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: -10px;
-            right: -10px;
-            bottom: -10px;
-            background: radial-gradient(circle, rgba(255, 105, 255, 0.3), transparent);
-            border-radius: 50%;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            z-index: -1;
-        }
-
-        .release:hover::before {
-            opacity: 1;
-        }
 
         .release:hover {
-            transform: scale(1.15) translateY(-15px) rotate(3deg);
+            transform: scale(1.05) translateY(-5px);
         }
 
         .release img {
@@ -273,8 +256,17 @@
             aspect-ratio: 1/1;
             object-fit: cover;
             border-radius: 50%;
-            transition: all 0.5s ease;
+            transition: all 0.4s ease;
             box-shadow: 0 9px 27px rgba(0, 0, 0, 0.3);
+        }
+
+        .release:hover img {
+            transform: scale(1.08);
+            filter: brightness(1.3) saturate(1.2);
+            box-shadow:
+                0 0 30px rgba(255, 105, 255, 0.6),
+                0 0 60px rgba(255, 105, 255, 0.4),
+                0 15px 40px rgba(0, 0, 0, 0.5);
         }
 
         /* === VINYL HOLE EFFECT === */
@@ -284,6 +276,28 @@
             overflow: hidden;
             -webkit-mask-image: radial-gradient(circle, transparent 0 14%, black 15%);
             mask-image: radial-gradient(circle, transparent 0 14%, black 15%);
+        }
+
+        .vinyl::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 105, 255, 0);
+            box-shadow: 0 0 20px rgba(255, 105, 255, 0);
+            transition: all 0.4s ease;
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .release:hover .vinyl::after {
+            border: 2px solid rgba(255, 105, 255, 0.8);
+            box-shadow:
+                0 0 40px rgba(255, 105, 255, 0.8),
+                inset 0 0 20px rgba(255, 105, 255, 0.3);
         }
 
         .vinyl::before {
@@ -332,11 +346,6 @@
             z-index: 2;
         }
 
-        .release:hover img {
-            border-color: #ff69ff;
-            box-shadow: 0 0 50px rgba(255, 105, 255, 0.6);
-            filter: brightness(1.2);
-        }
 
         .release p {
             font-family: 'Bebas Neue', 'Impact', sans-serif;
@@ -348,8 +357,8 @@
         }
 
         .release:hover p {
-            transform: scale(1.1);
-            text-shadow: 0 0 20px #ff69ff;
+            transform: scale(1.05);
+            text-shadow: 0 0 15px #ff69ff;
         }
 
         .custom-player {

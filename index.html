@@ -921,30 +921,7 @@
 
         let audioSource = null;
 
-    // === LAZY IMAGE LOADING WITH INTERSECTION OBSERVER ===
-        document.addEventListener('DOMContentLoaded', function() {
-            const lazyImages = document.querySelectorAll('img[loading="lazy"]');
-            if ('IntersectionObserver' in window) {
-                const observer = new IntersectionObserver((entries, obs) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            if (entry.target.dataset && entry.target.dataset.src) {
-                                entry.target.src = entry.target.dataset.src;
-                            }
-                            obs.unobserve(entry.target);
-                        }
-                    });
-                });
-                lazyImages.forEach(img => observer.observe(img));
-            } else {
-                // Fallback: just set src
-                lazyImages.forEach(img => {
-                    if (img.dataset && img.dataset.src) {
-                        img.src = img.dataset.src;
-                    }
-                });
-            }
-        });
+        
         
         function playTrack(src, title, artist, cover) {
             audio.src = src;
@@ -1515,6 +1492,32 @@
                 }
             }, { passive: true });
         });
+
+        // === LAZY IMAGE LOADING WITH INTERSECTION OBSERVER ===
+        document.addEventListener('DOMContentLoaded', function() {
+            const lazyImages = document.querySelectorAll('img[loading="lazy"]');
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries, obs) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            if (entry.target.dataset && entry.target.dataset.src) {
+                                entry.target.src = entry.target.dataset.src;
+                            }
+                            obs.unobserve(entry.target);
+                        }
+                    });
+                });
+                lazyImages.forEach(img => observer.observe(img));
+            } else {
+                // Fallback: just set src
+                lazyImages.forEach(img => {
+                    if (img.dataset && img.dataset.src) {
+                        img.src = img.dataset.src;
+                    }
+                });
+            }
+        });
+        
     </script>
 
     <script>

@@ -88,8 +88,8 @@
 
         /* WebGL Canvas поверх фона с прозрачностью */
         #glCanvas, #grainCanvas {
-            width: 110vw !important;
-            height: 110vh !important;
+            width: 130vw !important;
+            height: 130vh !important;
             transform: translate(-5%, -5%);
         }
 
@@ -1069,10 +1069,10 @@
 
         function resizeCanvas() {
             const dpr = window.devicePixelRatio || 1;
-            canvas.width = window.innerWidth * 1.1 * dpr;   // растягиваем с запасом
-            canvas.height = window.innerHeight * 1.1 * dpr;
-            canvas.style.width = '110vw';
-            canvas.style.height = '110vh';
+            canvas.width = window.innerWidth * 1.3 * dpr;   // растягиваем с запасом
+            canvas.height = window.innerHeight * 1.3 * dpr;
+            canvas.style.width = '120vw';
+            canvas.style.height = '120vh';
             canvas.style.transform = 'translate(-5%, -5%)'; // смещаем, чтобы скрыть края
             gl.viewport(0, 0, canvas.width, canvas.height);
         }
@@ -1374,10 +1374,10 @@
 
         function resizeGrain() {
             const dpr = window.devicePixelRatio || 1;
-            grainCanvas.width = window.innerWidth * 1.1 * dpr;
-            grainCanvas.height = window.innerHeight * 1.1 * dpr;
-            grainCanvas.style.width = '110vw';
-            grainCanvas.style.height = '110vh';
+            grainCanvas.width = window.innerWidth * 1.3 * dpr;
+            grainCanvas.height = window.innerHeight * 1.3 * dpr;
+            grainCanvas.style.width = '120vw';
+            grainCanvas.style.height = '120vh';
             grainCanvas.style.transform = 'translate(-5%, -5%)';
             ggl.viewport(0, 0, grainCanvas.width, grainCanvas.height);
         }

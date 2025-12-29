@@ -278,6 +278,18 @@
             mask-image: radial-gradient(circle, transparent 0 14%, black 15%);
         }
 
+        .vinyl img {
+            animation: rotate 20s linear infinite paused;
+            transition: all 0.4s ease;
+        }
+
+        .vinyl.playing img {
+            animation-play-state: running;
+            box-shadow:
+                0 0 40px rgba(255, 105, 255, 0.8),
+                0 0 80px rgba(255, 105, 255, 0.4);
+        }
+
         .vinyl::after {
             content: '';
             position: absolute;
@@ -291,6 +303,13 @@
             transition: all 0.4s ease;
             pointer-events: none;
             z-index: 3;
+        }
+
+        .vinyl.playing::after {
+            border: 2px solid rgba(255, 105, 255, 0.9);
+            box-shadow:
+                0 0 60px rgba(255, 105, 255, 0.9),
+                inset 0 0 30px rgba(255, 105, 255, 0.4);
         }
 
         .release:hover .vinyl::after {
@@ -608,28 +627,28 @@
         </div>
 
         <div class="releases">
-            <div class="release" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
+            <div class="release" data-title="Nazareth" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
                 <div class="vinyl">
                     <img src="IMG_7852.jpeg" alt="Nazareth">
                 </div>
                 <p>Slut Online, lindtayl0r - Nazareth</p>
             </div>
 
-            <div class="release" onclick="playTrack('track2.mp3', 'Sex & Limbo', 'Slut Online, lindtayl0r', 'IMG_7855.jpeg')">
+            <div class="release" data-title="Sex & Limbo" onclick="playTrack('track2.mp3', 'Sex & Limbo', 'Slut Online, lindtayl0r', 'IMG_7855.jpeg')">
                 <div class="vinyl">
                     <img src="IMG_7855.jpeg" alt="Sex & Limbo">
                 </div>
                 <p>Slut Online, lindtayl0r - Sex & Limbo</p>
             </div>
 
-            <div class="release" onclick="playTrack('track3.mp3', 'SPACEDUST', 'Unknown', 'IMG_7856.jpeg')">
+            <div class="release" data-title="SPACEDUST" onclick="playTrack('track3.mp3', 'SPACEDUST', 'Unknown', 'IMG_7856.jpeg')">
                 <div class="vinyl">
                     <img src="IMG_7856.jpeg" alt="SPACEDUST">
                 </div>
                 <p>SPACEDUST</p>
             </div>
 
-            <div class="release" onclick="playTrack('track4.mp3', 'Interstellar', 'XSDC', 'IMG_7857.jpeg')">
+            <div class="release" data-title="Interstellar" onclick="playTrack('track4.mp3', 'Interstellar', 'XSDC', 'IMG_7857.jpeg')">
                 <div class="vinyl">
                     <img src="IMG_7857.jpeg" alt="Interstellar">
                 </div>
@@ -719,6 +738,17 @@
             trackTitle.textContent = title;
             trackArtist.textContent = artist || 'Unknown';
             trackCover.src = cover;
+
+            document.querySelectorAll('.vinyl').forEach(v => {
+                v.classList.remove('playing');
+            });
+
+            const activeRelease = document.querySelector(`.release[data-title="${title}"]`);
+            if (activeRelease) {
+                const vinyl = activeRelease.querySelector('.vinyl');
+                if (vinyl) vinyl.classList.add('playing');
+            }
+
             h1.textContent = 'HINTS MUSIC — ' + title;
         }
 
@@ -727,6 +757,9 @@
                 audio.pause();
                 isPlaying = false;
                 trackCover.classList.remove('playing');
+                document.querySelectorAll('.vinyl').forEach(v => {
+                    v.classList.remove('playing');
+                });
             } else {
                 audio.play();
                 audioContext.resume();

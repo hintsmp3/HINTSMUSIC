@@ -755,6 +755,15 @@
                 // === Центровой glow ===
                 float centerGlow = pow(1.0 - displacedDist, 3.0) * (1.0 + bassReact * 3.0);
 
+                // === Мягкий блюр / туман в центре (убираем явную точку)
+                float centerBlur = smoothstep(0.0, 0.68, displacedDist);
+                centerBlur = 1.0 - centerBlur;
+                centerBlur = pow(centerBlur, 1.6);
+
+                // псевдо-блюр через цветовое растекание
+                vec3 blurColor = mix(magenta, white, 0.6);
+                blurColor = mix(blurColor, cyan, 0.3 + bassReact * 0.4);
+
                 // === Волны ===
                 float waves = sin(displacedDist * 8.0 - u_time * 2.5 + bassReact * 8.0);
                 waves += cos(displacedDist * 12.0 + u_time * 1.8) * 0.6;
@@ -762,6 +771,8 @@
 
                 color = mix(color, magenta, rings * (0.6 + bassReact));
                 color = mix(color, white, centerGlow * 0.7);
+                // Подмешиваем туман в центре вместо жёсткого glow
+                color = mix(color, blurColor, centerBlur * (0.35 + bassReact));
                 color = mix(color, purple, waves * 0.6);
 
                 float pulse = 0.85 + 0.25 * sin(u_time * 0.6 + displacedDist * 1.8);
@@ -771,8 +782,18 @@
                 color += vec3(1.0, 0.5, 1.0) * rings * bassReact * 2.0;
                 color += white * centerGlow * bassReact * 1.5;
 
+                // === Дополнительная аудио-реакция (пульс + цветовой сдвиг)
+                float audioPulse = sin(u_time * 2.0 + displacedDist * 6.0) * 0.5 + 0.5;
+                audioPulse *= bassReact * 1.5;
+
+                color += hotpink * audioPulse * 0.6;
+                color += cyan * audioPulse * 0.4;
+
                 // === Финальный воздушный лифт ===
                 color += vec3(0.08, 0.04, 0.08) * (0.6 + bassReact);
+
+                // Финальное смягчение центра
+                color = mix(color, color * 0.85 + blurColor * 0.15, centerBlur * 0.4);
 
                 color = clamp(color, 0.0, 1.0);
                 gl_FragColor = vec4(color, 1.0);
@@ -866,31 +887,31 @@
 
         // --- Shaders ---
         const grainVS = `
-attribute vec2 p;
-void main() {
-    gl_Position = vec4(p,0.,1.);
-}
-`;
+            attribute vec2 p;
+            void main() {
+                gl_Position = vec4(p,0.,1.);
+            }
+            `;
 
         const grainFS = `
-precision mediump float;
-uniform vec2 r;
-uniform float t;
+            precision mediump float;
+            uniform vec2 r;
+            uniform float t;
 
-float rand(vec2 c){
-    return fract(sin(dot(c,vec2(12.9898,78.233))) * 43758.5453);
-}
+            float rand(vec2 c){
+                return fract(sin(dot(c,vec2(12.9898,78.233))) * 43758.5453);
+            }
 
-void main(){
-    vec2 uv = gl_FragCoord.xy / r;
+            void main(){
+                vec2 uv = gl_FragCoord.xy / r;
 
-    float n = rand(uv * r + t * 60.0);
-    float scan = sin(uv.y * r.y * 1.5);
+                float n = rand(uv * r + t * 60.0);
+                float scan = sin(uv.y * r.y * 1.5);
 
-    float grain = n * 0.6 + scan * 0.15;
-    gl_FragColor = vec4(vec3(grain), 1.0);
-}
-`;
+                float grain = n * 0.6 + scan * 0.15;
+                gl_FragColor = vec4(vec3(grain), 1.0);
+            }
+            `;
 
         function gshader(type, src){
             const s = ggl.createShader(type);

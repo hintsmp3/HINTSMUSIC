@@ -51,6 +51,12 @@
             cursor: none;
         }
 
+        @media (hover: none) and (pointer: coarse) {
+            body.immersive {
+                cursor: auto;
+            }
+        }
+
         body.immersive #glCanvas {
             opacity: 1;
         }
@@ -82,13 +88,8 @@
 
         /* WebGL Canvas поверх фона с прозрачностью */
         #glCanvas, #grainCanvas {
-            position: fixed;
-            top: -10vh;
-            left: -10vw;
-            width: 120vw !important;
-            height: 120vh !important;
-            right: auto !important;
-            bottom: auto !important;
+            width: 100% !important;
+            height: 100% !important;
         }
 
         #glCanvas {
@@ -110,6 +111,11 @@
             pointer-events: none;
             mix-blend-mode: soft-light; /* можно soft-light */
             opacity: 0.0420;
+        }
+        .news-arrow, .play-pause, .news-close {
+            min-width: 44px;
+            min-height: 44px;
+            touch-action: manipulation;
         }
 
         img {
@@ -786,7 +792,7 @@
         <h1 id="mainTitle">HINTS MUSIC</h1>
 
         <div class="news" id="newsBlock">
-            <img src="IMG_7561.jpeg" alt="News image" class="news-img">
+            <img src="placeholder.jpg" data-src="IMG_7561.jpeg" alt="News image" class="news-img" loading="lazy">
             <div class="news-text">
                 <h2>Event</h2>
                 <p>12.20.2025<br>HINTS</p>
@@ -800,7 +806,7 @@
 
                 <div class="news-slides" id="newsSlides">
                     <div class="news-slide active">
-                        <img src="IMG_7561.jpeg" alt="">
+                        <img src="placeholder.jpg" data-src="IMG_7561.jpeg" alt="" loading="lazy">
                         <div class="slide-text">
                             <h2>12.20.2025</h2>
                             <p>HINTS EVENT<br>New era soon</p>
@@ -808,7 +814,7 @@
                     </div>
 
                     <div class="news-slide">
-                        <img src="IMG_7852.jpeg" alt="">
+                        <img src="placeholder.jpg" data-src="IMG_7852.jpeg" alt="" loading="lazy">
                         <div class="slide-text">
                             <h2>RELEASE</h2>
                             <p>Nazareth<br>Out now</p>
@@ -816,7 +822,7 @@
                     </div>
 
                     <div class="news-slide">
-                        <img src="IMG_7855.jpeg" alt="">
+                        <img src="placeholder.jpg" data-src="IMG_7855.jpeg" alt="" loading="lazy">
                         <div class="slide-text">
                             <h2>UPDATE</h2>
                             <p>More shows<br>soon</p>
@@ -832,35 +838,35 @@
         <div class="releases">
             <div class="release" data-title="Nazareth" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
                 <div class="vinyl">
-                    <img src="IMG_7852.jpeg" alt="Nazareth">
+                    <img src="placeholder.jpg" data-src="IMG_7852.jpeg" alt="Nazareth" loading="lazy">
                 </div>
                 <p>Slut Online, lindtayl0r - Nazareth</p>
             </div>
 
             <div class="release" data-title="Sex & Limbo" onclick="playTrack('track2.mp3', 'Sex & Limbo', 'Slut Online, lindtayl0r', 'IMG_7855.jpeg')">
                 <div class="vinyl">
-                    <img src="IMG_7855.jpeg" alt="Sex & Limbo">
+                    <img src="placeholder.jpg" data-src="IMG_7855.jpeg" alt="Sex & Limbo" loading="lazy">
                 </div>
                 <p>Slut Online, lindtayl0r - Sex & Limbo</p>
             </div>
 
             <div class="release" data-title="SPACEDUST" onclick="playTrack('track3.mp3', 'SPACEDUST', 'Unknown', 'IMG_7856.jpeg')">
                 <div class="vinyl">
-                    <img src="IMG_7856.jpeg" alt="SPACEDUST">
+                    <img src="placeholder.jpg" data-src="IMG_7856.jpeg" alt="SPACEDUST" loading="lazy">
                 </div>
                 <p>SPACEDUST</p>
             </div>
 
             <div class="release" data-title="Interstellar" onclick="playTrack('track4.mp3', 'Interstellar', 'XSDC', 'IMG_7857.jpeg')">
                 <div class="vinyl">
-                    <img src="IMG_7857.jpeg" alt="Interstellar">
+                    <img src="placeholder.jpg" data-src="IMG_7857.jpeg" alt="Interstellar" loading="lazy">
                 </div>
                 <p>XSDC - Interstellar</p>
             </div>
         </div>
 
         <div class="custom-player" id="customPlayer">
-            <img src="IMG_7851.jpeg" alt="Cover" class="track-cover" id="trackCover">
+            <img src="placeholder.jpg" data-src="IMG_7851.jpeg" alt="Cover" class="track-cover" id="trackCover" loading="lazy">
 
             <div class="track-info">
                 <h3 class="track-title" id="trackTitle">HINTS MUSIC</h3>
@@ -915,6 +921,31 @@
 
         let audioSource = null;
 
+    // === LAZY IMAGE LOADING WITH INTERSECTION OBSERVER ===
+        document.addEventListener('DOMContentLoaded', function() {
+            const lazyImages = document.querySelectorAll('img[loading="lazy"]');
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries, obs) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            if (entry.target.dataset && entry.target.dataset.src) {
+                                entry.target.src = entry.target.dataset.src;
+                            }
+                            obs.unobserve(entry.target);
+                        }
+                    });
+                });
+                lazyImages.forEach(img => observer.observe(img));
+            } else {
+                // Fallback: just set src
+                lazyImages.forEach(img => {
+                    if (img.dataset && img.dataset.src) {
+                        img.src = img.dataset.src;
+                    }
+                });
+            }
+        });
+        
         function playTrack(src, title, artist, cover) {
             audio.src = src;
 
@@ -933,6 +964,8 @@
                     trackCover.classList.add('playing');
                     customPlayer.classList.add('visible');
                     resetIdleTimer();
+                }).catch(err => {
+                    console.warn("Audio playback failed:", err);
                 });
             } else {
                 audio.play().then(() => {
@@ -941,6 +974,8 @@
                     updatePlayPause();
                     trackCover.classList.add('playing');
                     resetIdleTimer();
+                }).catch(err => {
+                    console.warn("Audio playback failed:", err);
                 });
             }
 
@@ -969,14 +1004,18 @@
                 document.querySelectorAll('.vinyl').forEach(v => {
                     v.classList.remove('playing');
                 });
+                updatePlayPause();
+                resetIdleTimer();
             } else {
-                audio.play();
+                audio.play().catch(err => {
+                    console.warn("Audio playback failed:", err);
+                });
                 audioContext.resume();
                 isPlaying = true;
                 trackCover.classList.add('playing');
+                updatePlayPause();
+                resetIdleTimer();
             }
-            updatePlayPause();
-            resetIdleTimer();
         });
 
         function enterImmersive() {
@@ -1433,20 +1472,31 @@
         }
         renderGrain();
 
-        // === PARTICLES ===
+        // === PARTICLES (POOLED) ===
+        const particles = [];
+        const MAX_PARTICLES = 50;
         const particlesContainer = document.getElementById('particles');
-        
-        function createParticle() {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.animationDuration = (Math.random() * 3 + 2) + 's';
-            particle.style.animationDelay = Math.random() * 2 + 's';
-            particlesContainer.appendChild(particle);
 
-            setTimeout(() => {
-                particle.remove();
-            }, 5000);
+        function createParticle() {
+            let particle = particles.find(p => !p.active);
+            if (!particle && particles.length < MAX_PARTICLES) {
+                const el = document.createElement('div');
+                el.className = 'particle';
+                particlesContainer.appendChild(el);
+                particle = { el, active: true };
+                particles.push(particle);
+            }
+            if (particle) {
+                particle.active = true;
+                particle.el.style.left = Math.random() * 100 + '%';
+                particle.el.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                particle.el.style.animationDelay = Math.random() * 2 + 's';
+                particle.el.style.display = 'block';
+                setTimeout(() => {
+                    particle.active = false;
+                    particle.el.style.display = 'none';
+                }, 5000);
+            }
         }
 
         setInterval(() => {

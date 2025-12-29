@@ -3,13 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HINTS MUSIC</title>
+    <!-- === SEO / META === -->
+    <meta name="description" content="HINTS MUSIC — независимый музыкальный лейбл. Новые релизы: Nazareth, Sex & Limbo, SPACEDUST, Interstellar. Электронная музыка, hyperpop, экспериментал.">
+    <meta name="keywords" content="HINTS MUSIC, музыкальный лейбл, Slut Online, lindtayl0r, Nazareth, Sex & Limbo, SPACEDUST, Interstellar, электронная музыка, hyperpop">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="HINTS MUSIC — Новый этап электронной музыки">
+    <meta property="og:description" content="Официальный сайт лейбла HINTS MUSIC. Новые релизы и события. New era soon.">
+    <meta property="og:image" content="https://hintsmp3.github.io/HINTSMUSIC/IMG_7851.jpeg">
+    <meta property="og:url" content="https://hintsmp3.github.io/HINTSMUSIC/">
+    <meta property="og:type" content="website">
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="HINTS MUSIC">
+    <meta name="twitter:description" content="Новый этап электронной музыки. Релизы и события.">
+    <meta name="twitter:image" content="https://hintsmp3.github.io/HINTSMUSIC/IMG_7851.jpeg">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "MusicGroup",
+      "name": "HINTS MUSIC",
+      "genre": ["Electronic", "Hyperpop", "Experimental"],
+      "description": "Независимый музыкальный лейбл. Новые релизы и события."
+    }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Impact&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        body {
+            min-width: 320px;
         }
 
         body {
@@ -25,6 +61,13 @@
         }
 
         /* WebGL Canvas поверх фона с прозрачностью */
+        #glCanvas, #grainCanvas {
+            width: 100vw !important;
+            height: 100vh !important;
+            left: 0 !important;
+            right: 0 !important;
+        }
+
         #glCanvas {
             position: fixed;
             top: 0;
@@ -44,6 +87,11 @@
             pointer-events: none;
             mix-blend-mode: soft-light; /* можно soft-light */
             opacity: 0.0420;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
         }
 
         /* Слой контента */
@@ -487,6 +535,44 @@
             .progress-container {
                 flex: 1;
                 margin: 0 10px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .releases {
+                padding: 20px 10px;
+                gap: 30px;
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+
+            .release:hover {
+                transform: scale(1.05);
+            }
+
+            .news {
+                margin: 0 20px 80px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .custom-player {
+                padding: 15px;
+                gap: 15px;
+                border-radius: 30px;
+            }
+
+            .track-cover {
+                width: 60px;
+                height: 60px;
+            }
+
+            .play-pause {
+                width: 50px;
+                height: 50px;
+            }
+
+            .track-title {
+                font-size: 1.8em;
             }
         }
     </style>

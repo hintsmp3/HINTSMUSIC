@@ -1160,15 +1160,19 @@
                 );
                 p += warp * (0.045 + bass * 0.18);
 
-                // === Сильный бас-дисплейсмент ===
-                float bassReact = u_audio * u_audio * 2.1;
-                // [4] Новый жидкий displace (анти-радиальный)
+                // === Сглаженный бас-дисплейсмент ===
+                float bassReact = pow(u_audio, 1.8) * 1.2; // сглаженный бас
+                // мягкий, плавный displace
                 vec2 displace = vec2(
-                    softNoise(p.yx * 2.2 + u_time * 0.5),
-                    softNoise(p.xy * 2.0 - u_time * 0.4)
-                ) * (0.28 + bassReact * 0.9);
-                float angle = atan(p.y, p.x);
-                displace += p * sin(angle * 6.0 + u_time * 1.5) * bassReact * 0.08;
+                    softNoise(p.yx * 2.2 + u_time * 0.4),
+                    softNoise(p.xy * 2.0 - u_time * 0.35)
+                ) * (0.18 + bassReact * 0.65);
+
+                // легкий псевдо-дрейф без радиальной фокусировки
+                displace += vec2(
+                    sin(u_time * 0.8 + p.x * 2.0) * 0.06,
+                    cos(u_time * 0.7 + p.y * 2.1) * 0.06
+                ) * bassReact;
 
                 vec2 displacedUV = p + displace;
                 float displacedDist = dot(abs(displacedUV), vec2(0.85, 1.15));

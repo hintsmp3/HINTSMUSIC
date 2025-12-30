@@ -605,6 +605,9 @@
 
             box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 0 2px rgba(255,105,255,0.2);
             transition: transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.9s ease, box-shadow 0.6s ease;
+
+            opacity: 0;
+            pointer-events: none;
         }
 
         .custom-player::before {
@@ -627,9 +630,10 @@
             pointer-events: none;
         }
 
-        .custom-player.visible {
-            transform: translateX(-50%) translateY(0);
+        .custom-player.visible,
+        #playerGlass.visible {
             opacity: 1;
+            pointer-events: auto;
         }
 
         .track-cover {
@@ -1072,6 +1076,7 @@
                     updatePlayPause();
                     trackCover.classList.add('playing');
                     customPlayer.classList.add('visible');
+                    playerCanvas.classList.add('visible');
                     resetIdleTimer();
                 }).catch(err => {
                     console.warn("Audio playback failed:", err);
@@ -1082,6 +1087,8 @@
                     isPlaying = true;
                     updatePlayPause();
                     trackCover.classList.add('playing');
+                    customPlayer.classList.add('visible');
+                    playerCanvas.classList.add('visible');
                     resetIdleTimer();
                 }).catch(err => {
                     console.warn("Audio playback failed:", err);
@@ -1117,6 +1124,8 @@
                     v.classList.remove('playing');
                 });
                 updatePlayPause();
+                customPlayer.classList.remove('visible');
+                playerCanvas.classList.remove('visible');
                 resetIdleTimer();
             } else {
                 audio.play().catch(err => {
@@ -1126,6 +1135,8 @@
                 isPlaying = true;
                 trackCover.classList.add('playing');
                 updatePlayPause();
+                customPlayer.classList.add('visible');
+                playerCanvas.classList.add('visible');
                 resetIdleTimer();
             }
         });
@@ -1553,6 +1564,8 @@
         // === PLAYER GLASS SHADER ===
         const playerCanvas = document.getElementById('playerGlass');
         const pgl = playerCanvas.getContext('webgl', { antialias: true });
+        // По умолчанию скрываем playerGlass (canvas)
+        playerCanvas.classList.remove('visible');
 
         function resizePlayerGlass() {
             const dpr = window.devicePixelRatio || 1;

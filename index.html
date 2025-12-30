@@ -584,26 +584,6 @@
             text-shadow: 0 0 15px #ff69ff;
         }
 
-        .player-glass-container {
-            position: fixed;
-            left: 50%;
-            bottom: 24px;
-            transform: translateX(-50%);
-            width: 63%;
-            max-width: 920px;
-            z-index: 10;
-            pointer-events: none;
-        }
-        #playerGlass {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            pointer-events: none;
-            border-radius: 64px;
-        }
         .custom-player {
             position: fixed;
             bottom: 24px;
@@ -989,28 +969,25 @@
             </div>
         </div>
 
-        <div class="player-glass-container">
-            <canvas id="playerGlass"></canvas>
-            <div class="custom-player" id="customPlayer">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7851.jpeg" alt="Cover" class="track-cover" id="trackCover" loading="lazy">
+        <div class="custom-player" id="customPlayer">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7851.jpeg" alt="Cover" class="track-cover" id="trackCover" loading="lazy">
 
-                <div class="track-info">
-                    <h3 class="track-title" id="trackTitle">HINTS MUSIC</h3>
-                    <p class="track-artist" id="trackArtist">Intro</p>
+            <div class="track-info">
+                <h3 class="track-title" id="trackTitle">HINTS MUSIC</h3>
+                <p class="track-artist" id="trackArtist">Intro</p>
+            </div>
+
+            <div class="controls">
+                <div class="play-pause" id="playPause">
+                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 </div>
 
-                <div class="controls">
-                    <div class="play-pause" id="playPause">
-                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <div class="progress-wrapper">
+                    <div class="time-left" id="timeLeft">0:00</div>
+                    <div class="progress-container" id="progressContainer">
+                        <div class="progress" id="progress"></div>
                     </div>
-
-                    <div class="progress-wrapper">
-                        <div class="time-left" id="timeLeft">0:00</div>
-                        <div class="progress-container" id="progressContainer">
-                            <div class="progress" id="progress"></div>
-                        </div>
-                        <div class="time-right" id="timeRight">0:00</div>
-                    </div>
+                    <div class="time-right" id="timeRight">0:00</div>
                 </div>
             </div>
         </div>
@@ -1742,96 +1719,6 @@
             }
         });
 
-    </script>
-
-    <!-- Glass WebGL shader for playerGlass -->
-    <script>
-    // === GLASS PLAYER SHADER ===
-    (function() {
-        const glassCanvas = document.getElementById('playerGlass');
-        if (!glassCanvas) return;
-        let glassGl = glassCanvas.getContext('webgl', { alpha: true, antialias: true, premultipliedAlpha: true });
-        if (!glassGl) return;
-
-        function resizeGlass() {
-            const container = glassCanvas.parentElement;
-            if (!container) return;
-            const rect = container.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            glassCanvas.width = rect.width * dpr;
-            glassCanvas.height = rect.height * dpr;
-            glassCanvas.style.width = rect.width + 'px';
-            glassCanvas.style.height = rect.height + 'px';
-            glassGl.viewport(0, 0, glassCanvas.width, glassCanvas.height);
-        }
-        // Initial size
-        resizeGlass();
-        window.addEventListener('resize', resizeGlass);
-
-        // Vertex shader
-        const vsSource = `
-            attribute vec2 aPos;
-            void main() {
-                gl_Position = vec4(aPos, 0.0, 1.0);
-            }
-        `;
-        // Fragment shader: glassy, with subtle animated caustics
-        const fsSource = `
-            precision mediump float;
-            uniform float u_time;
-            uniform vec2 u_res;
-            void main() {
-                vec2 uv = gl_FragCoord.xy / u_res;
-                float edge = smoothstep(0.04, 0.12, min(uv.x, min(uv.y, min(1.0-uv.x, 1.0-uv.y))));
-                float vignette = smoothstep(0.85, 0.45, length(uv-0.5));
-                float caustic = 0.0;
-                for (float i=0.; i<2.5; i+=1.0) {
-                    caustic += sin(uv.x*15.0 + u_time*0.7 + i*2.1) * cos(uv.y*18.0 - u_time*0.8 + i*1.7);
-                }
-                caustic = caustic * 0.04 + 0.06;
-                float glassAlpha = 0.27 + caustic + vignette*0.09;
-                float border = smoothstep(0.97, 0.995, length(uv-0.5)*1.42);
-                vec3 glassColor = mix(vec3(1.0,0.85,1.0), vec3(0.8,0.9,1.0), uv.y) * 0.5 + 0.5*vec3(1.0);
-                glassColor += caustic*vec3(0.7,0.8,1.0);
-                glassColor = mix(glassColor, vec3(1.0,0.5,1.0), edge*0.5);
-                glassColor = mix(glassColor, vec3(1.0), border*0.7);
-                gl_FragColor = vec4(glassColor, glassAlpha * (1.0-edge) * (1.0-border));
-            }
-        `;
-        function createShader(gl, type, source) {
-            const s = gl.createShader(type);
-            gl.shaderSource(s, source);
-            gl.compileShader(s);
-            return s;
-        }
-        const vshader = createShader(glassGl, glassGl.VERTEX_SHADER, vsSource);
-        const fshader = createShader(glassGl, glassGl.FRAGMENT_SHADER, fsSource);
-        const prog = glassGl.createProgram();
-        glassGl.attachShader(prog, vshader);
-        glassGl.attachShader(prog, fshader);
-        glassGl.linkProgram(prog);
-        // Buffers
-        const buf = glassGl.createBuffer();
-        glassGl.bindBuffer(glassGl.ARRAY_BUFFER, buf);
-        glassGl.bufferData(glassGl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), glassGl.STATIC_DRAW);
-        const posLoc = glassGl.getAttribLocation(prog, 'aPos');
-        const timeLoc = glassGl.getUniformLocation(prog, 'u_time');
-        const resLoc = glassGl.getUniformLocation(prog, 'u_res');
-        // Animate
-        function drawGlass() {
-            resizeGlass();
-            glassGl.clear(glassGl.COLOR_BUFFER_BIT);
-            glassGl.useProgram(prog);
-            glassGl.enableVertexAttribArray(posLoc);
-            glassGl.bindBuffer(glassGl.ARRAY_BUFFER, buf);
-            glassGl.vertexAttribPointer(posLoc, 2, glassGl.FLOAT, false, 0, 0);
-            glassGl.uniform1f(timeLoc, performance.now()*0.001);
-            glassGl.uniform2f(resLoc, glassCanvas.width, glassCanvas.height);
-            glassGl.drawArrays(glassGl.TRIANGLE_STRIP, 0, 4);
-            requestAnimationFrame(drawGlass);
-        }
-        drawGlass();
-    })();
     </script>
 
     <script>

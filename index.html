@@ -586,22 +586,65 @@
 
         .custom-player {
             position: fixed;
-            bottom: 30px;
+            bottom: 24px;
             left: 50%;
-            transform: translateX(-50%) translateY(150px);
-            width: 90%;
-            max-width: 900px;
-            background: rgba(0, 0, 0, 0.55);
-            backdrop-filter: blur(20px);
-            border-radius: 55px;
-            padding: 20px 30px;
-            box-shadow: 0 20px 50px rgba(255, 105, 255, 0.3);
+            transform: translateX(-50%) translateY(160px);
+            width: 92%;
+            max-width: 920px;
+
+            /* стеклянная капсула */
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(255,255,255,0.08),
+                    rgba(255,255,255,0.02)
+                ),
+                rgba(0,0,0,0.55);
+
+            backdrop-filter: blur(28px) saturate(1.4);
+            -webkit-backdrop-filter: blur(28px) saturate(1.4);
+
+            border-radius: 64px;
+            padding: 22px 34px;
+
             display: flex;
             align-items: center;
-            gap: 25px;
+            gap: 28px;
+
             z-index: 10;
-            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.8s ease;
+
             opacity: 0;
+            pointer-events: auto;
+
+            /* мягкое свечение */
+            box-shadow:
+                0 30px 90px rgba(255, 105, 255, 0.35),
+                inset 0 0 0 1px rgba(255,255,255,0.08);
+
+            transition:
+                transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                opacity 0.9s ease,
+                box-shadow 0.6s ease;
+        }
+
+        .custom-player::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background:
+                radial-gradient(
+                    circle at 20% 20%,
+                    rgba(255,105,255,0.25),
+                    transparent 45%
+                ),
+                radial-gradient(
+                    circle at 80% 80%,
+                    rgba(120,180,255,0.18),
+                    transparent 50%
+                );
+            opacity: 0.6;
+            pointer-events: none;
         }
 
         .custom-player.visible {
@@ -679,15 +722,25 @@
         }
 
         .play-pause {
-            width: 66px;
-            height: 66px;
-            background: rgba(255, 105, 255, 0.4);
+            width: 68px;
+            height: 68px;
+            background:
+                radial-gradient(
+                    circle at 30% 30%,
+                    rgba(255,255,255,0.35),
+                    rgba(255,105,255,0.45)
+                );
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.3s;
+
+            box-shadow:
+                0 0 30px rgba(255,105,255,0.8),
+                inset 0 0 12px rgba(255,255,255,0.25);
+
+            transition: all 0.3s ease;
         }
 
         .play-pause:hover {
@@ -716,7 +769,12 @@
         .progress {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, #ff69ff, #ffccff);
+            background: linear-gradient(
+                90deg,
+                #ff69ff,
+                #b084ff,
+                #6ecbff
+            );
             border-radius: 4px;
             transition: width 0.1s linear;
             box-shadow: 0 0 10px rgba(255, 105, 255, 0.8);

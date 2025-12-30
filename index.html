@@ -1407,7 +1407,7 @@
                 float n = rand(uv * r + t * 60.0);
                 float scan = sin(uv.y * r.y * 1.5);
 
-                float grain = n * 0.6 + scan * 0.15;
+                float grain = n * (0.6 + u_audio * 0.4) + scan * 0.15;
                 gl_FragColor = vec4(vec3(grain), 1.0);
             }
             `;
@@ -1435,7 +1435,7 @@
         const locP = ggl.getAttribLocation(gp, 'p');
         const locT = ggl.getUniformLocation(gp, 't');
         const locR = ggl.getUniformLocation(gp, 'r');
-
+        const locAudio = ggl.getUniformLocation(gp, 'u_audio');
         // --- Grain render loop ---
         function renderGrain(){
             ggl.clear(ggl.COLOR_BUFFER_BIT);
@@ -1448,6 +1448,7 @@
             ggl.uniform1f(locT, performance.now() * 0.001);
             ggl.uniform2f(locR, grainCanvas.width, grainCanvas.height);
 
+            ggl.uniform1f(locAudio, smoothAudio);
             ggl.drawArrays(ggl.TRIANGLE_STRIP, 0, 4);
             requestAnimationFrame(renderGrain);
         }

@@ -588,43 +588,23 @@
             position: fixed;
             bottom: 24px;
             left: 50%;
-            transform: translateX(-50%) translateY(160px);
+            transform: translateX(-50%) translateY(0);
             width: 63%;
             max-width: 920px;
-
-            /* стеклянная капсула */
-            background:
-                linear-gradient(
-                    180deg,
-                    rgba(255,255,255,0.008),
-                    rgba(255,255,255,0.002)
-                ),
-                rgba(0,0,0,0.55);
-
-            backdrop-filter: blur(28px) saturate(1.4);
-            -webkit-backdrop-filter: blur(28px) saturate(1.4);
-
-            border-radius: 64px;
             padding: 22px 34px;
-
+            border-radius: 64px;
             display: flex;
             align-items: center;
             gap: 28px;
-
             z-index: 10;
 
-            opacity: 0;
-            pointer-events: auto;
+            /* прозрачное стекло с настоящим эффектом */
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(18px) saturate(1.3);
+            -webkit-backdrop-filter: blur(18px) saturate(1.3);
 
-            /* мягкое свечение */
-            box-shadow:
-                0 30px 90px rgba(255, 105, 255, 0.35),
-                inset 0 0 0 1px rgba(255,255,255,0.08);
-
-            transition:
-                transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                opacity 0.9s ease,
-                box-shadow 0.6s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 0 2px rgba(255,105,255,0.2);
+            transition: transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.9s ease, box-shadow 0.6s ease;
         }
 
         .custom-player::before {
@@ -969,6 +949,7 @@
             </div>
         </div>
 
+        <canvas id="playerGlass"></canvas>
         <div class="custom-player" id="customPlayer">
             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7851.jpeg" alt="Cover" class="track-cover" id="trackCover" loading="lazy">
 
@@ -1568,6 +1549,88 @@
         // === GRAIN POST-PROCESS LAYER ===
         const grainCanvas = document.getElementById('grainCanvas');
         const ggl = grainCanvas.getContext('webgl');
+
+        // === PLAYER GLASS SHADER ===
+        const playerCanvas = document.getElementById('playerGlass');
+        const pgl = playerCanvas.getContext('webgl', { antialias: true });
+
+        function resizePlayerGlass() {
+            const dpr = window.devicePixelRatio || 1;
+            playerCanvas.width = customPlayer.offsetWidth * dpr;
+            playerCanvas.height = customPlayer.offsetHeight * dpr;
+            playerCanvas.style.width = customPlayer.offsetWidth + 'px';
+            playerCanvas.style.height = customPlayer.offsetHeight + 'px';
+            playerCanvas.style.position = 'fixed';
+            playerCanvas.style.left = (customPlayer.offsetLeft) + 'px';
+            playerCanvas.style.top = (customPlayer.offsetTop) + 'px';
+            playerCanvas.style.zIndex = 9;
+            pgl.viewport(0, 0, playerCanvas.width, playerCanvas.height);
+        }
+        resizePlayerGlass();
+        window.addEventListener('resize', resizePlayerGlass);
+
+        // Простой шейдер для искажения фона под плеером
+        const playerVS = `
+            attribute vec2 a_position;
+            void main() { gl_Position = vec4(a_position, 0.0, 1.0); }
+        `;
+
+        const playerFS = `
+            precision mediump float;
+            uniform vec2 u_resolution;
+            uniform float u_time;
+            void main() {
+                vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+                vec2 offset = vec2(
+                    sin(uv.y * 10.0 + u_time) * 0.015,
+                    cos(uv.x * 10.0 - u_time) * 0.015
+                );
+                vec3 color = vec3(0.0, 0.0, 0.0);
+                color += offset.x * 0.5 + offset.y * 0.5;
+                gl_FragColor = vec4(vec3(0.98,0.98,0.98)*0.1 + color, 0.2);
+            }
+        `;
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error(gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+
+        const playerVertexShader = createShader(pgl, pgl.VERTEX_SHADER, playerVS);
+        const playerFragmentShader = createShader(pgl, pgl.FRAGMENT_SHADER, playerFS);
+
+        const playerProgram = pgl.createProgram();
+        pgl.attachShader(playerProgram, playerVertexShader);
+        pgl.attachShader(playerProgram, playerFragmentShader);
+        pgl.linkProgram(playerProgram);
+
+        const pBuffer = pgl.createBuffer();
+        pgl.bindBuffer(pgl.ARRAY_BUFFER, pBuffer);
+        pgl.bufferData(pgl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), pgl.STATIC_DRAW);
+
+        const posLoc = pgl.getAttribLocation(playerProgram, 'a_position');
+        const resLoc = pgl.getUniformLocation(playerProgram, 'u_resolution');
+        const timeLoc = pgl.getUniformLocation(playerProgram, 'u_time');
+
+        function renderPlayerGlass() {
+            pgl.clear(pgl.COLOR_BUFFER_BIT);
+            pgl.useProgram(playerProgram);
+            pgl.enableVertexAttribArray(posLoc);
+            pgl.bindBuffer(pgl.ARRAY_BUFFER, pBuffer);
+            pgl.vertexAttribPointer(posLoc, 2, pgl.FLOAT, false, 0, 0);
+            pgl.uniform2f(resLoc, playerCanvas.width, playerCanvas.height);
+            pgl.uniform1f(timeLoc, performance.now() * 0.001);
+            pgl.drawArrays(pgl.TRIANGLE_STRIP, 0, 4);
+            requestAnimationFrame(renderPlayerGlass);
+        }
+        renderPlayerGlass();
 
         function resizeGrain() {
             const dpr = window.devicePixelRatio || 1;

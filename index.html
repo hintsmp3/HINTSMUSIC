@@ -940,6 +940,29 @@
         let isPlaying = false;
         let hasStartedPlaying = false;
 
+        // === PRELOAD AUDIO TRACKS ===
+        const trackCache = {};
+        const TRACKS_TO_PRELOAD = [
+            'track1.mp3',
+            'track2.mp3',
+            'track3.mp3',
+            'track4.mp3'
+        ];
+
+        function preloadTracks() {
+            TRACKS_TO_PRELOAD.forEach(src => {
+                fetch(src)
+                    .then(r => r.blob())
+                    .then(blob => {
+                        const url = URL.createObjectURL(blob);
+                        trackCache[src] = url;
+                    })
+                    .catch(err => {
+                        console.warn('Preload failed:', src, err);
+                    });
+            });
+        }
+
         let idleTimer = null;
         let immersive = false;
         const IDLE_DELAY = 18000; // 18 секунд
@@ -956,7 +979,7 @@
         
         
         function playTrack(src, title, artist, cover) {
-            audio.src = src;
+            audio.src = trackCache[src] || src;
 
             if (!audioSource) {
                 audioSource = audioContext.createMediaElementSource(audio);
@@ -1434,6 +1457,8 @@
             requestAnimationFrame(render);
         }
         render();
+        // Preload audio on first user interaction or page load
+        window.addEventListener('load', preloadTracks, { once: true });
 
         // === GRAIN POST-PROCESS LAYER ===
         const grainCanvas = document.getElementById('grainCanvas');

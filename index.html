@@ -1221,7 +1221,7 @@
                     softNoise(displacedUV.yx * 1.6 + u_time * 0.15) * 0.4);
 
                 // псевдо-блюр через цветовое растекание
-                vec3 blurColor = mix(magenta, spectralWhite, 0.35);
+                vec3 blurColor = mix(magenta, spectralWhite, 0.55);
                 blurColor = mix(blurColor, cyan, 0.3 + bassReact * 0.6);
 
                 // === Волны с локальной скоростью ===
@@ -1263,7 +1263,7 @@
                 float luminance = dot(color, vec3(0.299, 0.587, 0.114));
                 color = mix(color, vec3(luminance), 0.08);
                 float whiteKill = smoothstep(0.6, 0.95, luminance);
-                color = mix(color, spectralWhite, whiteKill * 0.12);
+                color = mix(color, spectralWhite, whiteKill * 0.31);
 
                 // Усиление цвета в idle / спокойных местах
                 float idleBoost = smoothstep(0.0, 0.25, u_audio);
@@ -1352,8 +1352,8 @@
 
                 color = pow(color, vec3(0.92));
                 color = clamp(color, 0.0, 1.0);
-                color /= (1.0 + bass * 0.8);
-                gl_FragColor = vec4(color * 1.25, 0.96);
+                color /= (1.0 + bass * 0.9);
+                gl_FragColor = vec4(color * 1.31, 0.96);
             }
         `;
 

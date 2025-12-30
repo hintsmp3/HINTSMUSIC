@@ -940,6 +940,31 @@
         let isPlaying = false;
         let hasStartedPlaying = false;
 
+        // === SINGLE SOURCE OF TIME TRUTH ===
+        let currentAudio = null;
+        let timeUpdateHandler = null;
+
+        function setCurrentAudio(audioElem) {
+            if (!audioElem) return;
+
+            if (currentAudio && timeUpdateHandler) {
+                currentAudio.removeEventListener('timeupdate', timeUpdateHandler);
+            }
+
+            currentAudio = audioElem;
+
+            timeUpdateHandler = () => {
+                if (!currentAudio.duration || !isFinite(currentAudio.duration)) return;
+
+                const percent = (currentAudio.currentTime / currentAudio.duration) * 100;
+                progress.style.width = percent + '%';
+                timeLeft.textContent = formatTime(currentAudio.currentTime);
+                timeRight.textContent = formatTime(currentAudio.duration);
+            };
+
+            currentAudio.addEventListener('timeupdate', timeUpdateHandler);
+        }
+
         // === PRELOAD AUDIO TRACKS ===
         const trackCache = {};
         const TRACKS_TO_PRELOAD = [
@@ -1068,11 +1093,11 @@
             h1.textContent = 'HINTS MUSIC — ' + title;
 
             // заменяем текущий audio
-            window.audio = newAudio;
+            setCurrentAudio(newAudio);
         }
 
         playPause.addEventListener('click', () => {
-            const curAudio = window.audio;
+            const curAudio = currentAudio;
             if (!curAudio) return;
             if (isPlaying) {
                 curAudio.pause();
@@ -1124,37 +1149,11 @@
             }
         }
 
-        // Обновление прогресса для текущего audio
-        function attachTimeUpdate(audioElem) {
-            if (!audioElem) return;
-            audioElem.addEventListener('timeupdate', () => {
-                if (audioElem.duration) {
-                    const percent = (audioElem.currentTime / audioElem.duration) * 100;
-                    progress.style.width = percent + '%';
-                    timeLeft.textContent = formatTime(audioElem.currentTime);
-                    timeRight.textContent = formatTime(audioElem.duration);
-                }
-            });
-        }
-
-        // Инициализация window.audio и обработчика
-        window.audio = audio;
-        attachTimeUpdate(audio);
-
-        // При смене window.audio, перевешиваем обработчик
-        Object.defineProperty(window, 'audio', {
-            set: function(val) {
-                this._audio = val;
-                attachTimeUpdate(val);
-            },
-            get: function() {
-                return this._audio;
-            }
-        });
-        window._audio = audio;
+        // === TIME UPDATE HANDLER IS NOW IN setCurrentAudio ===
+        setCurrentAudio(audio);
 
         progressContainer.addEventListener('click', (e) => {
-            const curAudio = window.audio;
+            const curAudio = currentAudio;
             if (!curAudio) return;
             const rect = progressContainer.getBoundingClientRect();
             const x = e.clientX - rect.left;

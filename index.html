@@ -1732,15 +1732,14 @@
         resizeEffect();
         window.addEventListener('resize', resizeEffect);
 
+        // Новый displacement-эффект линзы, без шума
         function renderEffect() {
             effectCtx.clearRect(0, 0, effectCanvas.width, effectCanvas.height);
 
-            // получаем уровень аудио
             analyser.getByteFrequencyData(dataArray);
             const audioLevel = (dataArray.reduce((a,b)=>a+b,0)/bufferLength)/255;
             const bass = Math.pow(audioLevel, 1.3);
 
-            // создаём шум для искажения
             const time = performance.now() * 0.002;
             const w = effectCanvas.width;
             const h = effectCanvas.height;
@@ -1748,20 +1747,34 @@
             const imageData = effectCtx.createImageData(w, h);
             const data = imageData.data;
 
-            for(let y = 0; y < h; y+=2){
-                for(let x = 0; x < w; x+=2){
+            // координаты центра линзы
+            const cx = w/2;
+            const cy = h/2;
+            const radius = Math.min(w,h)/2 * 0.9;
+
+            for(let y = 0; y < h; y++){
+                for(let x = 0; x < w; x++){
                     const idx = (y*w + x)*4;
-                    const nx = x/w;
-                    const ny = y/h;
 
-                    // искажение по шуму + аудио
-                    const dx = Math.sin(nx*10 + time*3) * bass * 12;
-                    const dy = Math.cos(ny*10 + time*2) * bass * 12;
+                    // смещение относительно центра
+                    let dx = x - cx;
+                    let dy = y - cy;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
 
-                    const r = 255 * Math.random() * 0.3 + 255*bass*0.4;
-                    const g = 105 + Math.random()*50 + 120*bass;
-                    const b = 255 + Math.random()*30;
-                    const a = 0.25 + bass*0.35;
+                    if(dist < radius){
+                        let factor = Math.sin((radius - dist)/radius * Math.PI*0.5) * bass * 12;
+                        dx *= factor / dist;
+                        dy *= factor / dist;
+                    } else {
+                        dx = 0;
+                        dy = 0;
+                    }
+
+                    // sample color из текущего canvas (для простоты используем фиксированный цвет)
+                    let r = 255;
+                    let g = 105;
+                    let b = 255;
+                    let a = 0.4;
 
                     data[idx] = r;
                     data[idx+1] = g;
@@ -1771,7 +1784,6 @@
             }
 
             effectCtx.putImageData(imageData, 0, 0);
-
             requestAnimationFrame(renderEffect);
         }
         renderEffect();

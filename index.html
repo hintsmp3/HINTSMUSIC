@@ -1718,36 +1718,122 @@
     </script>
 
     <script>
-    // === AUDIOREACTIVE PLAYER EFFECT LAYER ===
+    // === AUDIOREACTIVE PLAYER EFFECT LAYER (WebGL RGB Displacement) ===
     (function() {
-        const effectCanvas = document.getElementById('playerEffect');
-        if (!effectCanvas) return;
-        const effectCtx = effectCanvas.getContext('2d');
+        const canvas = document.getElementById('playerEffect');
+        if (!canvas) return;
+        const gl = canvas.getContext('webgl');
         const customPlayer = document.getElementById('customPlayer');
-        function resizeEffect() {
-            if (!customPlayer) return;
-            effectCanvas.width = customPlayer.offsetWidth;
-            effectCanvas.height = customPlayer.offsetHeight;
-        }
-        resizeEffect();
-        window.addEventListener('resize', resizeEffect);
 
-        function renderEffect() {
-            effectCtx.clearRect(0, 0, effectCanvas.width, effectCanvas.height);
-            // простой пульсирующий эффект по аудио
-            analyser.getByteFrequencyData(dataArray);
-            const audioLevel = (dataArray.reduce((a,b)=>a+b,0)/bufferLength)/255;
-            const gradient = effectCtx.createRadialGradient(
-                effectCanvas.width/2, effectCanvas.height/2, 0,
-                effectCanvas.width/2, effectCanvas.height/2, effectCanvas.width/2
-            );
-            gradient.addColorStop(0, `rgba(255,105,255,${0.08 + audioLevel * 0.35})`);
-            gradient.addColorStop(1, 'rgba(0,0,0,0)');
-            effectCtx.fillStyle = gradient;
-            effectCtx.fillRect(0,0,effectCanvas.width,effectCanvas.height);
-            requestAnimationFrame(renderEffect);
+        function resize() {
+            canvas.width = customPlayer.offsetWidth;
+            canvas.height = customPlayer.offsetHeight;
+            gl.viewport(0, 0, canvas.width, canvas.height);
         }
-        renderEffect();
+        resize();
+        window.addEventListener('resize', resize);
+
+        // === Shaders ===
+        const vsSource = `
+            attribute vec2 a_position;
+            void main() {
+                gl_Position = vec4(a_position, 0.0, 1.0);
+            }
+        `;
+
+        const fsSource = `
+            precision mediump float;
+            uniform float u_time;
+            uniform vec2 u_resolution;
+            uniform float u_audio;
+
+            vec2 displacement(vec2 uv, float offset){
+                uv += vec2(
+                    sin(uv.y*10.0 + u_time*2.0),
+                    cos(uv.x*10.0 - u_time*2.0)
+                ) * 0.01 * offset;
+                return uv;
+            }
+
+            void main() {
+                vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+
+                float audio = u_audio;
+
+                vec2 rUV = displacement(uv, 1.0);
+                vec2 gUV = displacement(uv, 0.8);
+                vec2 bUV = displacement(uv, 0.6);
+
+                vec3 colorR = vec3(1.0, 0.41, 1.0) * (0.2 + audio*0.8) * rUV.x;
+                vec3 colorG = vec3(0.7, 0.1, 1.0) * (0.2 + audio*0.8) * gUV.y;
+                vec3 colorB = vec3(0.3, 1.0, 1.0) * (0.2 + audio*0.8) * (rUV.x+gUV.y)*0.5;
+
+                vec3 color = colorR + colorG + colorB;
+                gl_FragColor = vec4(color, 0.35); // semi-transparent over glass
+            }
+        `;
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error(gl.getShaderInfoLog(shader));
+                return null;
+            }
+            return shader;
+        }
+
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vsSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
+
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            console.error(gl.getProgramInfoLog(program));
+        }
+
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        const positions = new Float32Array([
+            -1, -1,
+             1, -1,
+            -1,  1,
+             1,  1,
+        ]);
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+        const aPos = gl.getAttribLocation(program, 'a_position');
+        const uTime = gl.getUniformLocation(program, 'u_time');
+        const uRes = gl.getUniformLocation(program, 'u_resolution');
+        const uAudio = gl.getUniformLocation(program, 'u_audio');
+
+        let startTime = Date.now();
+        let smoothAudio = 0.01;
+
+        function render() {
+            analyser.getByteFrequencyData(dataArray);
+            const rawAudio = Math.min(1.0, (dataArray.reduce((a,b)=>a+b,0)/bufferLength/255.0)*1.2);
+            smoothAudio += (rawAudio - smoothAudio) * 0.1;
+
+            gl.clearColor(0,0,0,0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            gl.useProgram(program);
+            gl.enableVertexAttribArray(aPos);
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+            gl.uniform1f(uTime, (Date.now()-startTime)/1000.0);
+            gl.uniform2f(uRes, canvas.width, canvas.height);
+            gl.uniform1f(uAudio, smoothAudio);
+
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            requestAnimationFrame(render);
+        }
+        render();
     })();
     </script>
 

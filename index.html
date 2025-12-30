@@ -584,7 +584,7 @@
             text-shadow: 0 0 15px #ff69ff;
         }
 
-        .custom-player {
+       .custom-player {
             position: fixed;
             bottom: 24px;
             left: 50%;
@@ -1624,7 +1624,7 @@
         }
         renderGrain();
 
-        // === PLAYER GLASS SHADER ===
+        // === PLAYER GLASS WEBGL SHADER ===
         const playerGlass = document.getElementById('playerGlass');
         const pgl = playerGlass.getContext('webgl');
 
@@ -1648,20 +1648,17 @@
             }`;
                     const pgFS = `
             precision mediump float;
-            uniform sampler2D u_background;
             uniform vec2 u_resolution;
             uniform float u_time;
             varying vec2 v_uv;
-            void main(){
+            void main() {
                 vec2 uv = v_uv;
-                float strength = 0.02;
                 uv += vec2(
                     sin(uv.y*10.0+u_time)*0.01,
                     cos(uv.x*10.0+u_time)*0.01
                 );
-                vec3 color = texture2D(u_background, uv).rgb;
-                color = mix(color, vec3(1.0), 0.12);
-                gl_FragColor = vec4(color,0.9);
+                vec3 color = vec3(1.0); // светлое стекло
+                gl_FragColor = vec4(color,0.1); // полупрозрачное
             }`;
 
         function createShader(gl,type,src){

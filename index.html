@@ -1291,6 +1291,27 @@
 
                 color = mix(color, blurColor, cloud * 0.25);
 
+                // === EXTRA BEAUTY PASS (аккуратно) ===
+
+                // Мягкая виньетка для глубины
+                float vignette = smoothstep(1.2, 0.4, length(p));
+                color *= mix(0.92, 1.08, vignette);
+
+                // Цветовая дыхательная модуляция от баса
+                float chromaBreath = sin(u_time * 0.8 + displacedDist * 3.0) * 0.5 + 0.5;
+                chromaBreath *= bass * 0.6;
+                color += vec3(0.12, 0.05, 0.18) * chromaBreath;
+
+                // Субтильный hue-drift без HSV (без резких скачков)
+                color.rg += vec2(
+                    softNoise(p * 0.9 + u_time * 0.07),
+                    softNoise(p.yx * 1.1 - u_time * 0.05)
+                ) * 0.035 * (0.4 + bass);
+
+                // Лёгкий glow lift на пиках
+                float glow = smoothstep(0.45, 0.85, bass);
+                color = mix(color, color * 1.25, glow * 0.35);
+
                 color = clamp(color, 0.0, 1.0);
                 gl_FragColor = vec4(color * 1.65, 0.96);
             }

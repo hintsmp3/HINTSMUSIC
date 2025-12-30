@@ -1070,48 +1070,52 @@
                 analyser.connect(audioContext.destination);
             }
 
-            if (!hasStartedPlaying) {
-                audio.play().then(() => {
-                    audioContext.resume();
-                    isPlaying = true;
-                    hasStartedPlaying = true;
-                    updatePlayPause();
-                    trackCover.classList.add('playing');
-                    customPlayer.classList.add('visible');
-                    resetIdleTimer();
-                }).catch(err => {
-                    console.warn("Audio playback failed:", err);
-                });
-            } else {
-                audio.play().then(() => {
-                    audioContext.resume();
-                    isPlaying = true;
-                    updatePlayPause();
-                    trackCover.classList.add('playing');
-                    resetIdleTimer();
-                }).catch(err => {
-                    console.warn("Audio playback failed:", err);
-                });
-            }
+            // === Start playback ===
+            audio.play().then(() => {
+                audioContext.resume();
+                isPlaying = true;
+                hasStartedPlaying = true;
+                updatePlayPause();
+                trackCover.classList.add('playing');
+                customPlayer.classList.add('visible');
+                resetIdleTimer();
 
+                // === Haptic feedback ===
+                if (isTelegram && Telegram.WebApp?.HapticFeedback) {
+                    Telegram.WebApp.HapticFeedback.impactOccurred('medium'); // старт трека
+                }
+
+                // === Glow pulse on cover ===
+                trackCover.style.transition = 'box-shadow 0.2s ease';
+                trackCover.style.boxShadow = '0 0 60px #ff69ff, 0 0 120px #ff69ff inset';
+                setTimeout(() => {
+                    trackCover.style.boxShadow = '';
+                }, 300);
+
+                // === Telegram MainButton sync ===
+                if(isTelegram){
+                    const tg = Telegram.WebApp;
+                    tg.MainButton.text = '⏸ Pause';
+                    tg.MainButton.show();
+                    tg.MainButton.onClick(() => {
+                        playPause.click();
+                    });
+                }
+
+            }).catch(err => {
+                console.warn("Audio playback failed:", err);
+            });
+
+            // === Update UI ===
             trackTitle.textContent = title;
             trackArtist.textContent = artist || 'Unknown';
             trackCover.src = cover;
 
-            document.querySelectorAll('.vinyl').forEach(v => {
-                v.classList.remove('playing');
-            });
-
+            document.querySelectorAll('.vinyl').forEach(v => v.classList.remove('playing'));
             const activeRelease = document.querySelector(`.release[data-title="${title}"]`);
-            if (activeRelease) {
-                const vinyl = activeRelease.querySelector('.vinyl');
-                if (vinyl) vinyl.classList.add('playing');
-            }
+            if (activeRelease) activeRelease.querySelector('.vinyl')?.classList.add('playing');
 
             h1.textContent = 'HINTS MUSIC — ' + title;
-            if (isTelegram && Telegram.WebApp?.HapticFeedback) {
-                Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-            }
         }
 
         playPause.addEventListener('click', () => {

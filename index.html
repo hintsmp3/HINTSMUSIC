@@ -1718,64 +1718,68 @@
     </script>
 
     <script>
-    // === AUDIOREACTIVE PLAYER EFFECT LAYER ===
-    (function() {
-        const effectCanvas = document.getElementById('playerEffect');
-        if (!effectCanvas) return;
-        const effectCtx = effectCanvas.getContext('2d');
-        const customPlayer = document.getElementById('customPlayer');
-        function resizeEffect() {
-            if (!customPlayer) return;
-            effectCanvas.width = customPlayer.offsetWidth;
-            effectCanvas.height = customPlayer.offsetHeight;
-        }
-        resizeEffect();
-        window.addEventListener('resize', resizeEffect);
+(function() {
+    const effectCanvas = document.getElementById('playerEffect');
+    if (!effectCanvas) return;
+    const ctx = effectCanvas.getContext('2d');
+    const customPlayer = document.getElementById('customPlayer');
 
-        function renderEffect() {
-            effectCtx.clearRect(0, 0, effectCanvas.width, effectCanvas.height);
+    function resizeEffect() {
+        effectCanvas.width = customPlayer.offsetWidth;
+        effectCanvas.height = customPlayer.offsetHeight;
+    }
+    resizeEffect();
+    window.addEventListener('resize', resizeEffect);
 
-            // получаем уровень аудио
-            analyser.getByteFrequencyData(dataArray);
-            const audioLevel = (dataArray.reduce((a,b)=>a+b,0)/bufferLength)/255;
-            const bass = Math.pow(audioLevel, 1.3);
+    function renderEffect() {
+        ctx.clearRect(0, 0, effectCanvas.width, effectCanvas.height);
 
-            // создаём шум для искажения
-            const time = performance.now() * 0.002;
-            const w = effectCanvas.width;
-            const h = effectCanvas.height;
+        // Получаем аудио уровень
+        analyser.getByteFrequencyData(dataArray);
+        const audioLevel = (dataArray.reduce((a,b)=>a+b,0)/bufferLength)/255;
+        const bass = Math.pow(audioLevel, 1.3);
 
-            const imageData = effectCtx.createImageData(w, h);
-            const data = imageData.data;
+        const w = effectCanvas.width;
+        const h = effectCanvas.height;
+        const imageData = ctx.createImageData(w, h);
+        const data = imageData.data;
 
-            for(let y = 0; y < h; y+=2){
-                for(let x = 0; x < w; x+=2){
-                    const idx = (y*w + x)*4;
-                    const nx = x/w;
-                    const ny = y/h;
+        // Центр линзы
+        const cx = w/2;
+        const cy = h/2;
+        const radius = Math.min(w, h)/3 * (0.8 + bass*0.5);
 
-                    // искажение по шуму + аудио
-                    const dx = Math.sin(nx*10 + time*3) * bass * 12;
-                    const dy = Math.cos(ny*10 + time*2) * bass * 12;
+        for(let y = 0; y < h; y+=2){
+            for(let x = 0; x < w; x+=2){
+                const idx = (y*w + x)*4;
+                const dx = x - cx;
+                const dy = y - cy;
+                const dist = Math.sqrt(dx*dx + dy*dy);
 
-                    const r = 255 * Math.random() * 0.3 + 255*bass*0.4;
-                    const g = 105 + Math.random()*50 + 120*bass;
-                    const b = 255 + Math.random()*30;
-                    const a = 0.25 + bass*0.35;
+                if(dist < radius){
+                    // простая линзовая формула (псевдо-преломление)
+                    const factor = 1 - Math.sqrt(dist/radius);
+                    const sx = Math.floor(cx + dx*(1 - 0.3*factor));
+                    const sy = Math.floor(cy + dy*(1 - 0.3*factor));
 
-                    data[idx] = r;
-                    data[idx+1] = g;
-                    data[idx+2] = b;
-                    data[idx+3] = a*255;
+                    const srcIdx = (Math.min(h-1, Math.max(0, sy)) * w + Math.min(w-1, Math.max(0, sx)))*4;
+
+                    // белый эффект с прозрачностью
+                    data[idx] = 255;
+                    data[idx+1] = 255;
+                    data[idx+2] = 255;
+                    data[idx+3] = Math.floor(50 + bass*150);
+                } else {
+                    data[idx+3] = 0; // прозрачные пиксели вне линзы
                 }
             }
-
-            effectCtx.putImageData(imageData, 0, 0);
-
-            requestAnimationFrame(renderEffect);
         }
-        renderEffect();
-    })();
+
+        ctx.putImageData(imageData, 0, 0);
+        requestAnimationFrame(renderEffect);
+    }
+    renderEffect();
+})();
     </script>
 
     <script>

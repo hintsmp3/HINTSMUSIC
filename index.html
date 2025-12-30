@@ -1263,7 +1263,7 @@
                 float luminance = dot(color, vec3(0.299, 0.587, 0.114));
                 color = mix(color, vec3(luminance), 0.08);
                 float whiteKill = smoothstep(0.6, 0.95, luminance);
-                color = mix(color, spectralWhite, whiteKill * 0.31);
+                color = mix(color, spectralWhite, whiteKill * 0.12);
 
                 // Усиление цвета в idle / спокойных местах
                 float idleBoost = smoothstep(0.0, 0.25, u_audio);
@@ -1338,22 +1338,22 @@
                 // Цветовая дыхательная модуляция от баса
                 float chromaBreath = sin(u_time * 0.8 + displacedDist * 3.0) * 0.4 + 0.6;
                 chromaBreath *= bass * 0.3;
-                color += vec3(0.13, 0.005, 0.18) * chromaBreath;
+                color += vec3(0.12, 0.05, 0.18) * chromaBreath;
 
                 // Субтильный hue-drift без HSV (без резких скачков)
                 color.rg += vec2(
                     softNoise(p * 0.9 + u_time * 0.07),
                     softNoise(p.yx * 1.1 - u_time * 0.05)
-                ) * 0.035 * (0.3 + bass);
+                ) * 0.035 * (0.4 + bass);
 
                 // Лёгкий glow lift на пиках
                 float glow = smoothstep(0.45, 0.85, bass);
-                color = mix(color, color * 1, glow * 0.3);
+                color = mix(color, color * 1.15, glow * 0.1);
 
                 color = pow(color, vec3(0.92));
                 color = clamp(color, 0.0, 1.0);
-                color /= (1.0 + bass * 0.9);
-                gl_FragColor = vec4(color * 1, 0.96);
+                color /= (1.0 + bass * 0.8);
+                gl_FragColor = vec4(color * 1.25, 0.96);
             }
         `;
 

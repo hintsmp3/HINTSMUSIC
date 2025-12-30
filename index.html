@@ -630,8 +630,7 @@
             pointer-events: none;
         }
 
-        .custom-player.visible,
-        #playerGlass.visible {
+        .custom-player.visible {
             opacity: 1;
             pointer-events: auto;
         }
@@ -953,7 +952,6 @@
             </div>
         </div>
 
-        <canvas id="playerGlass"></canvas>
         <div class="custom-player" id="customPlayer">
             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7851.jpeg" alt="Cover" class="track-cover" id="trackCover" loading="lazy">
 
@@ -1076,7 +1074,6 @@
                     updatePlayPause();
                     trackCover.classList.add('playing');
                     customPlayer.classList.add('visible');
-                    playerCanvas.classList.add('visible');
                     resetIdleTimer();
                 }).catch(err => {
                     console.warn("Audio playback failed:", err);
@@ -1088,7 +1085,6 @@
                     updatePlayPause();
                     trackCover.classList.add('playing');
                     customPlayer.classList.add('visible');
-                    playerCanvas.classList.add('visible');
                     resetIdleTimer();
                 }).catch(err => {
                     console.warn("Audio playback failed:", err);
@@ -1125,7 +1121,6 @@
                 });
                 updatePlayPause();
                 customPlayer.classList.remove('visible');
-                playerCanvas.classList.remove('visible');
                 resetIdleTimer();
             } else {
                 audio.play().catch(err => {
@@ -1136,7 +1131,6 @@
                 trackCover.classList.add('playing');
                 updatePlayPause();
                 customPlayer.classList.add('visible');
-                playerCanvas.classList.add('visible');
                 resetIdleTimer();
             }
         });
@@ -1561,89 +1555,6 @@
         const grainCanvas = document.getElementById('grainCanvas');
         const ggl = grainCanvas.getContext('webgl');
 
-        // === PLAYER GLASS SHADER ===
-        const playerCanvas = document.getElementById('playerGlass');
-        const pgl = playerCanvas.getContext('webgl', { antialias: true });
-        // По умолчанию скрываем playerGlass (canvas)
-        playerCanvas.classList.remove('visible');
-
-        function resizePlayerGlass() {
-            const dpr = window.devicePixelRatio || 1;
-            playerCanvas.width = customPlayer.offsetWidth * dpr;
-            playerCanvas.height = customPlayer.offsetHeight * dpr;
-            playerCanvas.style.width = customPlayer.offsetWidth + 'px';
-            playerCanvas.style.height = customPlayer.offsetHeight + 'px';
-            playerCanvas.style.position = 'fixed';
-            playerCanvas.style.left = (customPlayer.offsetLeft) + 'px';
-            playerCanvas.style.top = (customPlayer.offsetTop) + 'px';
-            playerCanvas.style.zIndex = 9;
-            pgl.viewport(0, 0, playerCanvas.width, playerCanvas.height);
-        }
-        resizePlayerGlass();
-        window.addEventListener('resize', resizePlayerGlass);
-
-        // Простой шейдер для искажения фона под плеером
-        const playerVS = `
-            attribute vec2 a_position;
-            void main() { gl_Position = vec4(a_position, 0.0, 1.0); }
-        `;
-
-        const playerFS = `
-            precision mediump float;
-            uniform vec2 u_resolution;
-            uniform float u_time;
-            void main() {
-                vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-                vec2 offset = vec2(
-                    sin(uv.y * 10.0 + u_time) * 0.015,
-                    cos(uv.x * 10.0 - u_time) * 0.015
-                );
-                vec3 color = vec3(0.0, 0.0, 0.0);
-                color += offset.x * 0.5 + offset.y * 0.5;
-                gl_FragColor = vec4(vec3(0.98,0.98,0.98)*0.1 + color, 0.2);
-            }
-        `;
-
-        function createShader(gl, type, source) {
-            const shader = gl.createShader(type);
-            gl.shaderSource(shader, source);
-            gl.compileShader(shader);
-            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                console.error(gl.getShaderInfoLog(shader));
-                gl.deleteShader(shader);
-                return null;
-            }
-            return shader;
-        }
-
-        const playerVertexShader = createShader(pgl, pgl.VERTEX_SHADER, playerVS);
-        const playerFragmentShader = createShader(pgl, pgl.FRAGMENT_SHADER, playerFS);
-
-        const playerProgram = pgl.createProgram();
-        pgl.attachShader(playerProgram, playerVertexShader);
-        pgl.attachShader(playerProgram, playerFragmentShader);
-        pgl.linkProgram(playerProgram);
-
-        const pBuffer = pgl.createBuffer();
-        pgl.bindBuffer(pgl.ARRAY_BUFFER, pBuffer);
-        pgl.bufferData(pgl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), pgl.STATIC_DRAW);
-
-        const posLoc = pgl.getAttribLocation(playerProgram, 'a_position');
-        const resLoc = pgl.getUniformLocation(playerProgram, 'u_resolution');
-        const timeLoc = pgl.getUniformLocation(playerProgram, 'u_time');
-
-        function renderPlayerGlass() {
-            pgl.clear(pgl.COLOR_BUFFER_BIT);
-            pgl.useProgram(playerProgram);
-            pgl.enableVertexAttribArray(posLoc);
-            pgl.bindBuffer(pgl.ARRAY_BUFFER, pBuffer);
-            pgl.vertexAttribPointer(posLoc, 2, pgl.FLOAT, false, 0, 0);
-            pgl.uniform2f(resLoc, playerCanvas.width, playerCanvas.height);
-            pgl.uniform1f(timeLoc, performance.now() * 0.001);
-            pgl.drawArrays(pgl.TRIANGLE_STRIP, 0, 4);
-            requestAnimationFrame(renderPlayerGlass);
-        }
-        renderPlayerGlass();
 
         function resizeGrain() {
             const dpr = window.devicePixelRatio || 1;

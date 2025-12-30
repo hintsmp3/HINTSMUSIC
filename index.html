@@ -868,6 +868,7 @@
             }
         }
     </style>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
 
@@ -998,6 +999,30 @@
         let isPlaying = false;
         let hasStartedPlaying = false;
 
+        // === TELEGRAM MINI APP SETUP ===
+        const isTelegram = !!(window.Telegram && Telegram.WebApp);
+        let tgUser = null;
+
+        if (isTelegram) {
+            const tg = Telegram.WebApp;
+
+            // defer ready/expand until first interaction for iOS safety
+            const tgInitOnce = () => {
+                tg.ready();
+                tg.expand();
+                tg.enableClosingConfirmation();
+                document.removeEventListener('pointerdown', tgInitOnce);
+            };
+            document.addEventListener('pointerdown', tgInitOnce, { once: true });
+
+            tgUser = tg.initDataUnsafe?.user || null;
+
+            // Theme sync (soft, non-destructive)
+            if (tg.themeParams?.bg_color) {
+                document.documentElement.style.backgroundColor = tg.themeParams.bg_color;
+            }
+        }
+
         // === PRELOAD AUDIO TRACKS ===
         const trackCache = {};
         const TRACKS_TO_PRELOAD = [
@@ -1023,12 +1048,12 @@
 
         let idleTimer = null;
         let immersive = false;
-        const IDLE_DELAY = 18000; // 18 секунд
+        const IDLE_DELAY = isTelegram ? 12000 : 18000; // быстрее уходим в immersive в TG
 
         // Audio Context для анализа
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
+        analyser.fftSize = isTelegram ? 128 : 256;
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
 
@@ -1084,6 +1109,9 @@
             }
 
             h1.textContent = 'HINTS MUSIC — ' + title;
+            if (isTelegram && Telegram.WebApp?.HapticFeedback) {
+                Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+            }
         }
 
         playPause.addEventListener('click', () => {
@@ -1173,7 +1201,10 @@
 
         // === WEBGL SHADER BACKGROUND ===
         const canvas = document.getElementById('glCanvas');
-        const gl = canvas.getContext('webgl');
+        const gl = canvas.getContext('webgl', {
+            antialias: false,
+            preserveDrawingBuffer: false
+        });
 
         if (!gl) {
             console.error('WebGL не поддерживается');
@@ -1200,7 +1231,7 @@
 
         const fragmentShaderSource = `
             precision mediump float;
-            #define BLUR_SAMPLES 7
+            #define BLUR_SAMPLES 5
             uniform float u_time;
             uniform vec2 u_resolution;
             uniform float u_audio; // средняя громкость (0-1)
@@ -1488,7 +1519,10 @@
 
         function render() {
             analyser.getByteFrequencyData(dataArray);
-            const rawAudio = Math.min(1.0, (dataArray.reduce((a, b) => a + b) / bufferLength / 255.0) * 1.25);
+            const rawAudio = Math.min(
+                1.0,
+                (dataArray.reduce((a, b) => a + b) / bufferLength / 255.0) * (isTelegram ? 1.0 : 1.25)
+            );
 
             // Экспоненциальное сглаживание (инерция)
             const rise = 0.15;  // скорость реакции на удар

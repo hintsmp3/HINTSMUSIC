@@ -940,31 +940,6 @@
         let isPlaying = false;
         let hasStartedPlaying = false;
 
-        // === SINGLE SOURCE OF TIME TRUTH ===
-        let currentAudio = null;
-        let timeUpdateHandler = null;
-
-        function setCurrentAudio(audioElem) {
-            if (!audioElem) return;
-
-            if (currentAudio && timeUpdateHandler) {
-                currentAudio.removeEventListener('timeupdate', timeUpdateHandler);
-            }
-
-            currentAudio = audioElem;
-
-            timeUpdateHandler = () => {
-                if (!currentAudio.duration || !isFinite(currentAudio.duration)) return;
-
-                const percent = (currentAudio.currentTime / currentAudio.duration) * 100;
-                progress.style.width = percent + '%';
-                timeLeft.textContent = formatTime(currentAudio.currentTime);
-                timeRight.textContent = formatTime(currentAudio.duration);
-            };
-
-            currentAudio.addEventListener('timeupdate', timeUpdateHandler);
-        }
-
         // === PRELOAD AUDIO TRACKS ===
         const trackCache = {};
         const TRACKS_TO_PRELOAD = [
@@ -992,90 +967,50 @@
         let immersive = false;
         const IDLE_DELAY = 18000; // 18 секунд
 
-        // === LAZY AUDIO CONTEXT + SILENT WARM-UP ===
-        let audioCtx;
-        let silentNode;
-        let analyser;
-        let bufferLength, dataArray;
+        // Audio Context для анализа
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
         let audioSource = null;
 
-        function initAudioContext() {
-            if (audioCtx) return;
-
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-            // silent warm-up
-            silentNode = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            gain.gain.value = 0.00001;
-
-            silentNode.connect(gain).connect(audioCtx.destination);
-            silentNode.start();
-            silentNode.stop(audioCtx.currentTime + 0.05);
-
-            analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 256;
-            bufferLength = analyser.frequencyBinCount;
-            dataArray = new Uint8Array(bufferLength);
-        }
-
-        // === КРОССФЕЙД ВО ВРЕМЯ СМЕНЫ ТРЕКА ===
+        
+        
         function playTrack(src, title, artist, cover) {
-            const prevAudio = window.audio;
-            // Кроссфейд: создаём новый audio элемент
-            const newAudio = new Audio();
-            newAudio.src = trackCache[src] || src;
-            newAudio.crossOrigin = 'anonymous';
+            audio.src = trackCache[src] || src;
 
-            initAudioContext();
-            const trackSource = audioCtx.createMediaElementSource(newAudio);
-
-            const fadeIn = audioCtx.createGain();
-            const fadeOut = audioCtx.createGain();
-
-            fadeIn.gain.setValueAtTime(0.0, audioCtx.currentTime);
-            fadeIn.gain.linearRampToValueAtTime(1.0, audioCtx.currentTime + 0.25);
-
-            fadeOut.gain.setValueAtTime(1.0, audioCtx.currentTime);
-            fadeOut.gain.linearRampToValueAtTime(0.0, audioCtx.currentTime + 0.25);
-
-            // Подключение анализатора после fadeIn, если есть анализатор
-            if (analyser) {
-                fadeIn.connect(analyser);
-                analyser.connect(audioCtx.destination);
-            } else {
-                fadeIn.connect(audioCtx.destination);
-            }
-            trackSource.connect(fadeIn);
-
-            // плавно гасим предыдущий трек
-            if (prevAudio && prevAudio._sourceNode) {
-                prevAudio._gainNode.gain.linearRampToValueAtTime(0.0, audioCtx.currentTime + 0.25);
+            if (!audioSource) {
+                audioSource = audioContext.createMediaElementSource(audio);
+                audioSource.connect(analyser);
+                analyser.connect(audioContext.destination);
             }
 
-            newAudio._sourceNode = trackSource;
-            newAudio._gainNode = fadeIn;
-
-            // Первый запуск: прогреваем контекст и резюмируем
             if (!hasStartedPlaying) {
-                initAudioContext();
-                audioCtx.resume();
-                hasStartedPlaying = true;
-                customPlayer.classList.add('visible');
+                audio.play().then(() => {
+                    audioContext.resume();
+                    isPlaying = true;
+                    hasStartedPlaying = true;
+                    updatePlayPause();
+                    trackCover.classList.add('playing');
+                    customPlayer.classList.add('visible');
+                    resetIdleTimer();
+                }).catch(err => {
+                    console.warn("Audio playback failed:", err);
+                });
+            } else {
+                audio.play().then(() => {
+                    audioContext.resume();
+                    isPlaying = true;
+                    updatePlayPause();
+                    trackCover.classList.add('playing');
+                    resetIdleTimer();
+                }).catch(err => {
+                    console.warn("Audio playback failed:", err);
+                });
             }
-            // Сразу резюмируем контекст перед play
-            initAudioContext();
-            audioCtx.resume();
-            newAudio.play().then(() => {
-                isPlaying = true;
-                updatePlayPause();
-                trackCover.classList.add('playing');
-                resetIdleTimer();
-            }).catch(err => {
-                console.warn("Audio playback failed:", err);
-            });
 
-            // Обновляем UI
             trackTitle.textContent = title;
             trackArtist.textContent = artist || 'Unknown';
             trackCover.src = cover;
@@ -1091,16 +1026,11 @@
             }
 
             h1.textContent = 'HINTS MUSIC — ' + title;
-
-            // заменяем текущий audio
-            setCurrentAudio(newAudio);
         }
 
         playPause.addEventListener('click', () => {
-            const curAudio = currentAudio;
-            if (!curAudio) return;
             if (isPlaying) {
-                curAudio.pause();
+                audio.pause();
                 isPlaying = false;
                 trackCover.classList.remove('playing');
                 document.querySelectorAll('.vinyl').forEach(v => {
@@ -1109,11 +1039,10 @@
                 updatePlayPause();
                 resetIdleTimer();
             } else {
-                initAudioContext();
-                audioCtx.resume();
-                curAudio.play().catch(err => {
+                audio.play().catch(err => {
                     console.warn("Audio playback failed:", err);
                 });
+                audioContext.resume();
                 isPlaying = true;
                 trackCover.classList.add('playing');
                 updatePlayPause();
@@ -1149,16 +1078,20 @@
             }
         }
 
-        // === TIME UPDATE HANDLER IS NOW IN setCurrentAudio ===
-        setCurrentAudio(audio);
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                progress.style.width = percent + '%';
+                timeLeft.textContent = formatTime(audio.currentTime);
+                timeRight.textContent = formatTime(audio.duration);
+            }
+        });
 
         progressContainer.addEventListener('click', (e) => {
-            const curAudio = currentAudio;
-            if (!curAudio) return;
             const rect = progressContainer.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const percent = Math.max(0, Math.min(1, x / rect.width));
-            curAudio.currentTime = percent * curAudio.duration;
+            audio.currentTime = percent * audio.duration;
         });
 
         function formatTime(seconds) {
@@ -1496,17 +1429,15 @@
         let smoothAudio = 0.01;
 
         function render() {
-            if (analyser && dataArray) {
-                analyser.getByteFrequencyData(dataArray);
-                const rawAudio = Math.min(1.0, (dataArray.reduce((a, b) => a + b) / bufferLength / 255.0) * 1.25);
+            analyser.getByteFrequencyData(dataArray);
+            const rawAudio = Math.min(1.0, (dataArray.reduce((a, b) => a + b) / bufferLength / 255.0) * 1.25);
 
-                // Экспоненциальное сглаживание (инерция)
-                const rise = 0.15;  // скорость реакции на удар
-                const fall = 0.01;  // скорость затухания
+            // Экспоненциальное сглаживание (инерция)
+            const rise = 0.15;  // скорость реакции на удар
+            const fall = 0.01;  // скорость затухания
 
-                const delta = rawAudio - smoothAudio;
-                smoothAudio += delta * (delta > 0.0 ? rise : fall);
-            }
+            const delta = rawAudio - smoothAudio;
+            smoothAudio += delta * (delta > 0.0 ? rise : fall);
 
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);

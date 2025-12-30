@@ -584,7 +584,7 @@
             text-shadow: 0 0 15px #ff69ff;
         }
 
-       .custom-player {
+        .custom-player {
             position: fixed;
             bottom: 24px;
             left: 50%;
@@ -592,9 +592,17 @@
             width: 63%;
             max-width: 920px;
 
-            background: transparent;
-            backdrop-filter: none;
-            -webkit-backdrop-filter: none;
+            /* стеклянная капсула */
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(255,255,255,0.008),
+                    rgba(255,255,255,0.002)
+                ),
+                rgba(0,0,0,0.55);
+
+            backdrop-filter: blur(28px) saturate(1.4);
+            -webkit-backdrop-filter: blur(28px) saturate(1.4);
 
             border-radius: 64px;
             padding: 22px 34px;
@@ -604,12 +612,19 @@
             gap: 28px;
 
             z-index: 10;
+
             opacity: 0;
             pointer-events: auto;
 
+            /* мягкое свечение */
+            box-shadow:
+                0 30px 90px rgba(255, 105, 255, 0.35),
+                inset 0 0 0 1px rgba(255,255,255,0.08);
+
             transition:
                 transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                opacity 0.9s ease;
+                opacity 0.9s ease,
+                box-shadow 0.6s ease;
         }
 
         .custom-player::before {
@@ -617,6 +632,18 @@
             position: absolute;
             inset: 0;
             border-radius: inherit;
+            background:
+                radial-gradient(
+                    circle at 20% 20%,
+                    rgba(255,105,255,0.25),
+                    transparent 45%
+                ),
+                radial-gradient(
+                    circle at 80% 80%,
+                    rgba(120,180,255,0.18),
+                    transparent 50%
+                );
+            opacity: 0.6;
             pointer-events: none;
         }
 
@@ -943,7 +970,6 @@
         </div>
 
         <div class="custom-player" id="customPlayer">
-            <canvas id="playerGlass" style="position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;"></canvas>
             <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7851.jpeg" alt="Cover" class="track-cover" id="trackCover" loading="lazy">
 
             <div class="track-info">
@@ -1623,80 +1649,6 @@
             requestAnimationFrame(renderGrain);
         }
         renderGrain();
-
-        // === PLAYER GLASS WEBGL SHADER ===
-        const playerGlass = document.getElementById('playerGlass');
-        const pgl = playerGlass.getContext('webgl');
-
-        function resizePlayerGlass() {
-            const dpr = window.devicePixelRatio || 1;
-            playerGlass.width = customPlayer.offsetWidth * dpr;
-            playerGlass.height = customPlayer.offsetHeight * dpr;
-            playerGlass.style.width = customPlayer.offsetWidth + 'px';
-            playerGlass.style.height = customPlayer.offsetHeight + 'px';
-            pgl.viewport(0,0,playerGlass.width, playerGlass.height);
-        }
-        resizePlayerGlass();
-        window.addEventListener('resize', resizePlayerGlass);
-
-        const pgVS = `
-            attribute vec2 a_position;
-            varying vec2 v_uv;
-            void main() {
-                v_uv = (a_position+1.0)*0.5;
-                gl_Position = vec4(a_position,0.0,1.0);
-            }`;
-                    const pgFS = `
-            precision mediump float;
-            uniform vec2 u_resolution;
-            uniform float u_time;
-            varying vec2 v_uv;
-            void main() {
-                vec2 uv = v_uv;
-                uv += vec2(
-                    sin(uv.y*10.0+u_time)*0.01,
-                    cos(uv.x*10.0+u_time)*0.01
-                );
-                vec3 color = vec3(1.0); // светлое стекло
-                gl_FragColor = vec4(color,0.1); // полупрозрачное
-            }`;
-
-        function createShader(gl,type,src){
-            const s=gl.createShader(type);
-            gl.shaderSource(s,src);
-            gl.compileShader(s);
-            if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){
-                console.error(gl.getShaderInfoLog(s));
-                return null;
-            }
-            return s;
-        }
-
-        const pgProgram = pgl.createProgram();
-        pgl.attachShader(pgProgram, createShader(pgl,pgl.VERTEX_SHADER,pgVS));
-        pgl.attachShader(pgProgram, createShader(pgl,pgl.FRAGMENT_SHADER,pgFS));
-        pgl.linkProgram(pgProgram);
-
-        const pgBuf = pgl.createBuffer();
-        pgl.bindBuffer(pgl.ARRAY_BUFFER, pgBuf);
-        pgl.bufferData(pgl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),pgl.STATIC_DRAW);
-
-        const pgPos = pgl.getAttribLocation(pgProgram,'a_position');
-        const pgTime = pgl.getUniformLocation(pgProgram,'u_time');
-        const pgRes = pgl.getUniformLocation(pgProgram,'u_resolution');
-
-        function renderPlayerGlass(){
-            pgl.clear(pgl.COLOR_BUFFER_BIT);
-            pgl.useProgram(pgProgram);
-            pgl.enableVertexAttribArray(pgPos);
-            pgl.bindBuffer(pgl.ARRAY_BUFFER,pgBuf);
-            pgl.vertexAttribPointer(pgPos,2,pgl.FLOAT,false,0,0);
-            pgl.uniform1f(pgTime,(Date.now()-startTime)/1000.0);
-            pgl.uniform2f(pgRes,playerGlass.width,playerGlass.height);
-            pgl.drawArrays(pgl.TRIANGLE_STRIP,0,4);
-            requestAnimationFrame(renderPlayerGlass);
-        }
-        renderPlayerGlass();
 
         // === PARTICLES (POOLED) ===
         const particles = [];

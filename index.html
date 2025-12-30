@@ -1093,10 +1093,13 @@
             uniform float u_time;
             uniform vec2 u_resolution;
             uniform float u_audio; // средняя громкость (0-1)
+            uniform float u_energy; // усиленная энергия (для красоты)
 
             // --- Аудио сглаживание и бас ---
             float audio = smoothstep(0.02, 0.6, u_audio);
             float bass = pow(audio, 1.6);
+            float energy = smoothstep(0.05, 0.9, u_audio);
+            energy = mix(energy, pow(energy, 2.0), 0.5);
 
             vec3 pink = vec3(1.0, 0.41, 1.0);
             vec3 hotpink = vec3(1.0, 0.1, 0.8);
@@ -1183,8 +1186,12 @@
                 float flowMask = smoothstep(-0.3, 0.7, flowNoise);
 
                 // === Цветовая логика ===
+                float chromaWave = sin(u_time * 0.35 + displacedDist * 2.5);
+                chromaWave = chromaWave * 0.5 + 0.5;
+                chromaWave *= energy * 0.6;
                 vec3 color =
                     mix(pink, hotpink, softNoise(displacedUV * 1.3 + u_time * 0.12));
+                color = mix(color, vec3(0.9, 0.4, 1.0), chromaWave * 0.35);
 
                 color = mix(color, magenta,
                     softNoise(displacedUV * 2.1 - u_time * 0.18) * 0.6);
@@ -1312,6 +1319,8 @@
                 float glow = smoothstep(0.45, 0.85, bass);
                 color = mix(color, color * 1.25, glow * 0.35);
 
+                float softGlow = smoothstep(0.4, 0.9, bass) * 0.25;
+                color += color * softGlow;
                 color = clamp(color, 0.0, 1.0);
                 gl_FragColor = vec4(color * 1.65, 0.96);
             }
@@ -1383,6 +1392,8 @@
             gl.uniform1f(timeLocation, (Date.now() - startTime) / 1000.0);
             gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
             gl.uniform1f(audioLocation, smoothAudio);
+            const energyLocation = gl.getUniformLocation(program, 'u_energy');
+            gl.uniform1f(energyLocation, Math.pow(smoothAudio, 1.3));
 
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 

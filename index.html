@@ -1752,82 +1752,102 @@
     </script>
     <script>
     (function() {
-      if (!isTelegram || !tgUser || window.hintsTrackingInitialized) return;
-      window.hintsTrackingInitialized = true;
-    
-      const BOT_API_URL = 'https://hints.ellijabooking.workers.dev';
-      const userId = tgUser.id;
-      const userName = tgUser.first_name || 'User';
-    
-      let currentTrack = null;
-      let trackPlayStartTime = null; // Когда началось реальное воспроизведение
-      let accumulatedPlayTime = 0;  // Накопленное время именно проигрывания
-    
-      async function sendEvent(eventType, data = {}) {
-        const payload = { userId, userName, eventType, data };
-        if (navigator.sendBeacon) {
-          navigator.sendBeacon(`${BOT_API_URL}/track`, JSON.stringify(payload));
-        } else {
-          fetch(`${BOT_API_URL}/track`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-            keepalive: true
-          });
+        if (!isTelegram || !tgUser || window.hintsTrackingInitialized) return;
+        window.hintsTrackingInitialized = true;
+
+        const BOT_API_URL = 'https://hints.ellijabooking.workers.dev';
+        const userId = tgUser.id;
+        const userName = tgUser.first_name || 'User';
+
+        let currentTrack = null;
+        let accumulatedPlayback = 0;       // Накопленное реальное время воспроизведения (секунды)
+        let lastCurrentTime = 0;          // Последнее известное audio.currentTime
+        let isPlaying = false;
+
+        async function sendEvent(eventType, data = {}) {
+            const payload = { userId, userName, eventType, data };
+            if (navigator.sendBeacon) {
+                navigator.sendBeacon(`${BOT_API_URL}/track`, JSON.stringify(payload));
+            } else {
+                fetch(`${BOT_API_URL}/track`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    keepalive: true
+                });
+            }
         }
-      }
-    
-      // Перехватываем playTrack
-      const originalPlayTrack = window.playTrack;
-      window.playTrack = function(src, title, artist, cover) {
-        originalPlayTrack(src, title, artist, cover);
-    
-        // Если уже играл трек — фиксируем время предыдущего
-        if (trackPlayStartTime !== null) {
-          accumulatedPlayTime += Math.floor((Date.now() - trackPlayStartTime) / 1000);
+
+        // Получаем аудио-элемент
+        const audio = document.getElementById('audio');
+        if (!audio) {
+            console.error('Audio element #audio not found for tracking');
+            return;
         }
-    
-        currentTrack = title;
-        trackPlayStartTime = Date.now();
-    
-        sendEvent('track_play', { track: title, artist });
-      };
-    
-      // При паузе или смене трека — фиксируем накопленное время
-      function stopTrackingPlayback() {
-        if (trackPlayStartTime !== null) {
-          accumulatedPlayTime += Math.floor((Date.now() - trackPlayStartTime) / 1000);
-          trackPlayStartTime = null;
-        }
-      }
-    
-      // Отслеживаем паузу (предполагается, что у тебя есть audio элемент с id="audio")
-      const audio = document.getElementById('audio');
-      if (audio) {
-        audio.addEventListener('pause', stopTrackingPlayback);
-        audio.addEventListener('ended', stopTrackingPlayback);
-      }
-    
-      // Периодическая отправка накопленного времени
-      setInterval(() => {
-        if (accumulatedPlayTime > 0) {
-          sendEvent('playback_time_update', { playTimeSeconds: accumulatedPlayTime });
-          accumulatedPlayTime = 0; // сбрасываем после отправки
-        }
-      }, 15000); // каждые 15 секунд
-    
-      // При закрытии страницы — отправляем остаток
-      window.addEventListener('beforeunload', () => {
-        stopTrackingPlayback();
-        if (accumulatedPlayTime > 0) {
-          sendEvent('playback_time_update', { playTimeSeconds: accumulatedPlayTime });
-        }
-      });
-    
-      // Старт сессии
-      sendEvent('session_start');
+
+        // Перехват playTrack для фиксации текущего трека
+        const originalPlayTrack = window.playTrack || function() {};
+        window.playTrack = function(src, title, artist, cover) {
+            originalPlayTrack(src, title, artist, cover);
+            currentTrack = title;
+            sendEvent('track_play', { track: title, artist });
+        };
+
+        // Старт сессии
+        sendEvent('session_start');
+
+        // Отслеживание состояний воспроизведения
+        audio.addEventListener('play', () => {
+            isPlaying = true;
+            lastCurrentTime = audio.currentTime;
+        });
+
+        audio.addEventListener('pause', () => {
+            isPlaying = false;
+        });
+
+        audio.addEventListener('ended', () => {
+            isPlaying = false;
+        });
+
+        // Основной точный трекинг через timeupdate
+        audio.addEventListener('timeupdate', () => {
+            if (isPlaying && audio.currentTime >= lastCurrentTime) {
+                // Накапливаем только прирост времени (игнорируем перемотку назад)
+                accumulatedPlayback += audio.currentTime - lastCurrentTime;
+                lastCurrentTime = audio.currentTime;
+
+                // Отправляем каждые 15 секунд реального прослушивания
+                if (accumulatedPlayback >= 15) {
+                    const secondsToSend = Math.floor(accumulatedPlayback);
+                    sendEvent('playback_time_update', { playTimeSeconds: secondsToSend });
+                    accumulatedPlayback -= secondsToSend;
+                }
+            } else {
+                // При перемотке или паузе сбрасываем базовую точку
+                lastCurrentTime = audio.currentTime;
+            }
+        });
+
+        // Fallback-отправка каждые 30 секунд (на случай редких timeupdate)
+        setInterval(() => {
+            if (accumulatedPlayback > 0) {
+                const secondsToSend = Math.floor(accumulatedPlayback);
+                sendEvent('playback_time_update', { playTimeSeconds: secondsToSend });
+                accumulatedPlayback -= secondsToSend;
+            }
+        }, 30000);
+
+        // При закрытии страницы/вкладки
+        window.addEventListener('beforeunload', () => {
+            if (accumulatedPlayback > 0) {
+                const secondsToSend = Math.floor(accumulatedPlayback);
+                sendEvent('playback_time_update', { playTimeSeconds: secondsToSend });
+            }
+            sendEvent('session_end');
+        });
     })();
-    </script>
+</script>
 
 </body>
 </html>

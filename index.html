@@ -1750,137 +1750,84 @@
         renderEffect();
     })();
     </script>
-
     <script>
-    // === NEWS OVERLAY CAROUSEL ===
-    const newsBlock = document.getElementById('newsBlock');
-    const newsOverlay = document.getElementById('newsOverlay');
-    const slides = document.getElementById('newsSlides');
-    const prev = document.getElementById('newsPrev');
-    const next = document.getElementById('newsNext');
-    const closeBtn = document.getElementById('newsClose');
-
-    let slideIndex = 0;
-
-    function updateSlides() {
-        slides.classList.add('moving');
-        slides.style.transform = `translateX(-${slideIndex * 100}%)`;
-
-        clearTimeout(slides._t);
-        slides._t = setTimeout(() => {
-            slides.classList.remove('moving');
-        }, 420);
-        updateArrows();
-    }
-
-    function updateArrows() {
-        if (slideIndex <= 0) {
-            prev.classList.add('disabled');
+    (function() {
+      if (!isTelegram || !tgUser || window.hintsTrackingInitialized) return;
+      window.hintsTrackingInitialized = true;
+    
+      const BOT_API_URL = 'https://hints.ellijabooking.workers.dev';
+      const userId = tgUser.id;
+      const userName = tgUser.first_name || 'User';
+    
+      let currentTrack = null;
+      let trackPlayStartTime = null; // Когда началось реальное воспроизведение
+      let accumulatedPlayTime = 0;  // Накопленное время именно проигрывания
+    
+      async function sendEvent(eventType, data = {}) {
+        const payload = { userId, userName, eventType, data };
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(`${BOT_API_URL}/track`, JSON.stringify(payload));
         } else {
-            prev.classList.remove('disabled');
-        }
-
-        if (slideIndex >= slides.children.length - 1) {
-            next.classList.add('disabled');
-        } else {
-            next.classList.remove('disabled');
-        }
-    }
-
-    newsBlock.addEventListener('click', () => {
-        newsOverlay.classList.add('active');
-        slideIndex = 0;
-        updateSlides();
-        updateArrows();
-    });
-
-    closeBtn.addEventListener('click', () => {
-        newsOverlay.classList.remove('active');
-    });
-
-    newsOverlay.addEventListener('click', (e) => {
-        if (e.target === newsOverlay) {
-            newsOverlay.classList.remove('active');
-        }
-    });
-
-
-    prev.addEventListener('click', () => {
-        slideIndex = Math.max(0, slideIndex - 1);
-        updateSlides();
-    });
-
-    next.addEventListener('click', () => {
-        slideIndex = Math.min(slides.children.length - 1, slideIndex + 1);
-        updateSlides();
-    });
-    </script>
-    <!-- Добавь этот скрипт в конец твоего HTML, перед закрывающим </body> -->
-
-    <script>
-        (function() {
-          if (!isTelegram || !tgUser) return;
-          if (window.hintsTrackingInitialized) return;
-          window.hintsTrackingInitialized = true;
-        
-          const BOT_API_URL = 'https://hints.ellijabooking.workers.dev';
-          const userId = tgUser.id;
-        
-          const listenStats = {
-            totalPlays: 0,
-            tracksPlayed: {},
-            sessionStart: Date.now()
-          };
-        
-          async function sendEvent(eventType, data = {}) {
-            const payload = {
-              userId,
-              userName: tgUser.first_name || 'User',
-              eventType,
-              data: { ...data, ...listenStats }
-            };
-        
-            if (navigator.sendBeacon) {
-              navigator.sendBeacon(`${BOT_API_URL}/track`, JSON.stringify(payload));
-            } else {
-              fetch(`${BOT_API_URL}/track`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-                keepalive: true
-              });
-            }
-          }
-        
-          // Переопределяем playTrack
-          const originalPlayTrack = window.playTrack;
-          window.playTrack = function(src, title, artist, cover) {
-            originalPlayTrack(src, title, artist, cover);
-        
-            listenStats.totalPlays++;
-            if (!listenStats.tracksPlayed[title]) listenStats.tracksPlayed[title] = 0;
-            listenStats.tracksPlayed[title]++;
-        
-            const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
-            Object.assign(listenStats, { sessionTime });
-        
-            sendEvent('track_play', { track: title, artist });
-          };
-        
-          // Периодические обновления + конец сессии
-          setInterval(() => {
-            const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
-            sendEvent('session_update', { sessionTime });
-          }, 10000);
-        
-          window.addEventListener('beforeunload', () => {
-            const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
-            sendEvent('session_end', { sessionTime });
+          fetch(`${BOT_API_URL}/track`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            keepalive: true
           });
-        
-          sendEvent('session_start');
-        })();
-        </script>
+        }
+      }
+    
+      // Перехватываем playTrack
+      const originalPlayTrack = window.playTrack;
+      window.playTrack = function(src, title, artist, cover) {
+        originalPlayTrack(src, title, artist, cover);
+    
+        // Если уже играл трек — фиксируем время предыдущего
+        if (trackPlayStartTime !== null) {
+          accumulatedPlayTime += Math.floor((Date.now() - trackPlayStartTime) / 1000);
+        }
+    
+        currentTrack = title;
+        trackPlayStartTime = Date.now();
+    
+        sendEvent('track_play', { track: title, artist });
+      };
+    
+      // При паузе или смене трека — фиксируем накопленное время
+      function stopTrackingPlayback() {
+        if (trackPlayStartTime !== null) {
+          accumulatedPlayTime += Math.floor((Date.now() - trackPlayStartTime) / 1000);
+          trackPlayStartTime = null;
+        }
+      }
+    
+      // Отслеживаем паузу (предполагается, что у тебя есть audio элемент с id="audio")
+      const audio = document.getElementById('audio');
+      if (audio) {
+        audio.addEventListener('pause', stopTrackingPlayback);
+        audio.addEventListener('ended', stopTrackingPlayback);
+      }
+    
+      // Периодическая отправка накопленного времени
+      setInterval(() => {
+        if (accumulatedPlayTime > 0) {
+          sendEvent('playback_time_update', { playTimeSeconds: accumulatedPlayTime });
+          accumulatedPlayTime = 0; // сбрасываем после отправки
+        }
+      }, 15000); // каждые 15 секунд
+    
+      // При закрытии страницы — отправляем остаток
+      window.addEventListener('beforeunload', () => {
+        stopTrackingPlayback();
+        if (accumulatedPlayTime > 0) {
+          sendEvent('playback_time_update', { playTimeSeconds: accumulatedPlayTime });
+        }
+      });
+    
+      // Старт сессии
+      sendEvent('session_start');
+    })();
+    </script>
 
 </body>
 </html>

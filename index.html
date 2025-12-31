@@ -1878,11 +1878,14 @@
             if (!listenStats.tracksPlayed[title]) listenStats.tracksPlayed[title] = 0;
             listenStats.tracksPlayed[title]++;
 
+            const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
+
             sendEventToBot('track_play', {
                 track: title,
                 artist,
                 playCount: listenStats.tracksPlayed[title],
-                totalPlays: listenStats.totalPlays
+                totalPlays: listenStats.totalPlays,
+                sessionTime: sessionTime
             });
 
             checkAchievements(title);
@@ -1904,13 +1907,19 @@
             }
         }
 
-        // Таймер с порогом
-        let lastSessionUpdate = 0;
+        // Таймер обновления сессии каждые 30 секунд (по 10 сек интервалу)
+        let updateCounter = 0;
         setInterval(() => {
+            updateCounter++;
             const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
-            if (sessionTime - lastSessionUpdate >= 60) { // каждые ~минуту
-                sendEventToBot('session_update', { sessionTime, stats: listenStats });
-                lastSessionUpdate = sessionTime;
+            
+            // Отправляем каждые 30 секунд
+            if (updateCounter >= 3) {
+                sendEventToBot('session_update', { 
+                    sessionTime, 
+                    stats: listenStats 
+                });
+                updateCounter = 0;
             }
         }, 10000);
 

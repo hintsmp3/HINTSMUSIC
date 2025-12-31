@@ -1815,6 +1815,118 @@
         updateSlides();
     });
     </script>
+    <!-- Добавь этот скрипт в конец твоего HTML, перед закрывающим </body> -->
+
+<script>
+    // === TELEGRAM WEB APP TRACKING SYSTEM ===
+    (function() {
+        if (!isTelegram || !tgUser) return;
+    
+        const BOT_API_URL = 'https://hints-music-bot.YOUR-WORKER-NAME.workers.dev';
+        const userId = tgUser.id;
+    
+        // Трекинг прослушиваний
+        const listenStats = {
+            totalPlays: 0,
+            tracksPlayed: {},
+            sessionStart: Date.now()
+        };
+    
+        // Отправка события боту
+        async function sendEventToBot(eventType, data) {
+            try {
+                const payload = {
+                    userId: userId,
+                    userName: tgUser.first_name || 'User',
+                    eventType: eventType,
+                    data: data,
+                    timestamp: Date.now()
+                };
+    
+                await fetch(`${BOT_API_URL}/track`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.warn('Tracking failed:', err);
+            }
+        }
+    
+        // Переопределяем playTrack для трекинга
+        const originalPlayTrack = window.playTrack;
+        window.playTrack = function(src, title, artist, cover) {
+            // Вызываем оригинальную функцию
+            originalPlayTrack(src, title, artist, cover);
+    
+            // Трекинг
+            listenStats.totalPlays++;
+            if (!listenStats.tracksPlayed[title]) {
+                listenStats.tracksPlayed[title] = 0;
+            }
+            listenStats.tracksPlayed[title]++;
+    
+            // Отправляем событие
+            sendEventToBot('track_play', {
+                track: title,
+                artist: artist,
+                playCount: listenStats.tracksPlayed[title],
+                totalPlays: listenStats.totalPlays
+            });
+    
+            // Проверяем достижения
+            checkAchievements(title);
+        };
+    
+        // Система достижений
+        function checkAchievements(trackTitle) {
+            const achievements = {
+                'first_listen': listenStats.totalPlays === 1,
+                'music_lover': listenStats.totalPlays === 10,
+                'dedicated_fan': listenStats.totalPlays === 50,
+                'nazareth_fan': trackTitle === 'Nazareth' && listenStats.tracksPlayed['Nazareth'] === 5,
+                'full_album': Object.keys(listenStats.tracksPlayed).length === 4
+            };
+    
+            for (const [achievement, unlocked] of Object.entries(achievements)) {
+                if (unlocked) {
+                    sendEventToBot('achievement', { 
+                        achievement: achievement,
+                        stats: listenStats 
+                    });
+                }
+            }
+        }
+    
+        // Трекинг времени на сайте
+        setInterval(() => {
+            const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
+            if (sessionTime % 60 === 0) { // Каждую минуту
+                sendEventToBot('session_update', {
+                    sessionTime: sessionTime,
+                    stats: listenStats
+                });
+            }
+        }, 60000);
+    
+        // Отправка при закрытии
+        window.addEventListener('beforeunload', () => {
+            const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
+            sendEventToBot('session_end', {
+                sessionTime: sessionTime,
+                stats: listenStats
+            });
+        });
+    
+        // Начало сессии
+        sendEventToBot('session_start', {
+            userAgent: navigator.userAgent,
+            language: navigator.language
+        });
+    
+        console.log('🎵 HINTS Tracking initialized for user:', userId);
+    })();
+    </script>
 
 </body>
 </html>

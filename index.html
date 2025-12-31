@@ -1818,123 +1818,125 @@
     <!-- Добавь этот скрипт в конец твоего HTML, перед закрывающим </body> -->
 
     <script>
-    // === TELEGRAM WEB APP TRACKING SYSTEM ===
-    (function() {
-        if (!isTelegram || !tgUser) return;
+(function() {
+    if (!isTelegram || !tgUser) return;
 
-        const BOT_API_URL = 'https://api.telegram.org/bot8415504217:AAFvp-ycDVid-1GZ6cshsR_vW5Vf0bPIECc/setWebhook?url=https://hints.ellijabooking.workers.dev/';
-        const userId = tgUser.id;
+    const BOT_API_URL = 'https://hints.ellijabooking.workers.dev';
+    const userId = tgUser.id;
 
-        const listenStats = {
-            totalPlays: 0,
-            tracksPlayed: {},
-            sessionStart: Date.now()
+    const listenStats = {
+        totalPlays: 0,
+        tracksPlayed: {},
+        sessionStart: Date.now()
+    };
+
+    // Буфер событий, на случай оффлайна
+    const eventQueue = [];
+    let sending = false;
+
+    async function sendEventToBot(eventType, data) {
+        const payload = {
+            userId,
+            userName: tgUser.first_name || 'User',
+            eventType,
+            data,
+            timestamp: Date.now()
         };
+        eventQueue.push(payload);
+        processQueue();
+    }
 
-        // Буфер событий, на случай оффлайна
-        const eventQueue = [];
-        let sending = false;
+    async function processQueue() {
+        if (sending || !eventQueue.length) return;
+        sending = true;
 
-        async function sendEventToBot(eventType, data) {
-            const payload = {
-                userId,
-                userName: tgUser.first_name || 'User',
-                eventType,
-                data,
-                timestamp: Date.now()
-            };
-            eventQueue.push(payload);
-            processQueue();
-        }
-
-        async function processQueue() {
-            if (sending || !eventQueue.length) return;
-            sending = true;
-
-            while (eventQueue.length) {
-                const evt = eventQueue[0];
-                try {
-                    if (!navigator.onLine) throw 'Offline';
-                    await fetch(`${BOT_API_URL}/track`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(evt)
-                    });
-                    eventQueue.shift();
-                } catch (err) {
-                    console.warn('Tracking deferred:', err);
-                    break; // попробуем позже
-                }
-            }
-            sending = false;
-        }
-
-        // Переопределяем playTrack
-        const originalPlayTrack = window.playTrack;
-        window.playTrack = function(src, title, artist, cover) {
-            originalPlayTrack(src, title, artist, cover);
-
-            listenStats.totalPlays++;
-            if (!listenStats.tracksPlayed[title]) listenStats.tracksPlayed[title] = 0;
-            listenStats.tracksPlayed[title]++;
-
-            const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
-
-            sendEventToBot('track_play', {
-                track: title,
-                artist,
-                playCount: listenStats.tracksPlayed[title],
-                totalPlays: listenStats.totalPlays,
-                sessionTime: sessionTime
-            });
-
-            checkAchievements(title);
-        };
-
-        function checkAchievements(trackTitle) {
-            const achievements = {
-                'first_listen': listenStats.totalPlays === 1,
-                'music_lover': listenStats.totalPlays === 10,
-                'dedicated_fan': listenStats.totalPlays === 50,
-                'nazareth_fan': trackTitle === 'Nazareth' && listenStats.tracksPlayed['Nazareth'] === 5,
-                'full_album': Object.keys(listenStats.tracksPlayed).length === 4
-            };
-
-            for (const [name, unlocked] of Object.entries(achievements)) {
-                if (unlocked) {
-                    sendEventToBot('achievement', { achievement: name, stats: listenStats });
-                }
-            }
-        }
-
-        // Таймер обновления сессии каждые 30 секунд (по 10 сек интервалу)
-        let updateCounter = 0;
-        setInterval(() => {
-            updateCounter++;
-            const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
-            
-            // Отправляем каждые 30 секунд
-            if (updateCounter >= 3) {
-                sendEventToBot('session_update', { 
-                    sessionTime, 
-                    stats: listenStats 
+        while (eventQueue.length) {
+            const evt = eventQueue[0];
+            try {
+                if (!navigator.onLine) throw 'Offline';
+                await fetch(`${BOT_API_URL}/track`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(evt)
                 });
-                updateCounter = 0;
+                eventQueue.shift();
+            } catch (err) {
+                console.warn('Tracking deferred:', err);
+                break; // попробуем позже
             }
-        }, 10000);
+        }
+        sending = false;
+    }
 
-        window.addEventListener('beforeunload', () => {
-            const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
-            sendEventToBot('session_end', { sessionTime, stats: listenStats });
+    // Переопределяем playTrack
+    const originalPlayTrack = window.playTrack;
+    window.playTrack = function(src, title, artist, cover) {
+        originalPlayTrack(src, title, artist, cover);
+
+        listenStats.totalPlays++;
+        if (!listenStats.tracksPlayed[title]) listenStats.tracksPlayed[title] = 0;
+        listenStats.tracksPlayed[title]++;
+
+        const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
+
+        sendEventToBot('track_play', {
+            track: title,
+            artist,
+            playCount: listenStats.tracksPlayed[title],
+            totalPlays: listenStats.totalPlays,
+            sessionTime: sessionTime
         });
 
-        sendEventToBot('session_start', {
-            userAgent: navigator.userAgent,
-            language: navigator.language
-        });
+        checkAchievements(title);
+    };
 
-        console.log('🎵 HINTS Tracking initialized for user:', userId);
-    })();
+    function checkAchievements(trackTitle) {
+        const achievements = {
+            'first_listen': listenStats.totalPlays === 1,
+            'music_lover': listenStats.totalPlays === 10,
+            'dedicated_fan': listenStats.totalPlays === 50,
+            'nazareth_fan': trackTitle === 'Nazareth' && listenStats.tracksPlayed['Nazareth'] === 5,
+            'full_album': Object.keys(listenStats.tracksPlayed).length === 4
+        };
+
+        for (const [name, unlocked] of Object.entries(achievements)) {
+            if (unlocked) {
+                const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
+                sendEventToBot('achievement', { 
+                    achievement: name, 
+                    stats: listenStats,
+                    sessionTime: sessionTime
+                });
+            }
+        }
+    }
+
+    let updateCounter = 0;
+    setInterval(() => {
+        updateCounter++;
+        const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
+
+        if (updateCounter >= 3) {
+            sendEventToBot('session_update', { 
+                sessionTime, 
+                stats: listenStats 
+            });
+            updateCounter = 0;
+        }
+    }, 10000);
+
+    window.addEventListener('beforeunload', () => {
+        const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
+        sendEventToBot('session_end', { sessionTime, stats: listenStats });
+    });
+
+    sendEventToBot('session_start', {
+        userAgent: navigator.userAgent,
+        language: navigator.language
+    });
+
+    console.log('🎵 HINTS Tracking initialized for user:', userId);
+})();
     </script>
 
 </body>

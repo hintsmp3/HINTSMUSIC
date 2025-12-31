@@ -1818,126 +1818,69 @@
     <!-- Добавь этот скрипт в конец твоего HTML, перед закрывающим </body> -->
 
     <script>
-(function() {
-    if (!isTelegram || !tgUser) return;
-
-    const BOT_API_URL = 'https://hints.ellijabooking.workers.dev';
-    const userId = tgUser.id;
-
-    const listenStats = {
-        totalPlays: 0,
-        tracksPlayed: {},
-        sessionStart: Date.now()
-    };
-
-    // Буфер событий, на случай оффлайна
-    const eventQueue = [];
-    let sending = false;
-
-    async function sendEventToBot(eventType, data) {
-        const payload = {
-            userId,
-            userName: tgUser.first_name || 'User',
-            eventType,
-            data,
-            timestamp: Date.now()
-        };
-        eventQueue.push(payload);
-        processQueue();
-    }
-
-    async function processQueue() {
-        if (sending || !eventQueue.length) return;
-        sending = true;
-
-        while (eventQueue.length) {
-            const evt = eventQueue[0];
-            try {
-                if (!navigator.onLine) throw 'Offline';
-                await fetch(`${BOT_API_URL}/track`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(evt)
-                });
-                eventQueue.shift();
-            } catch (err) {
-                console.warn('Tracking deferred:', err);
-                break; // попробуем позже
+        (function() {
+          if (!isTelegram || !tgUser) return;
+          if (window.hintsTrackingInitialized) return;
+          window.hintsTrackingInitialized = true;
+        
+          const BOT_API_URL = 'https://hints.ellijabooking.workers.dev';
+          const userId = tgUser.id;
+        
+          const listenStats = {
+            totalPlays: 0,
+            tracksPlayed: {},
+            sessionStart: Date.now()
+          };
+        
+          async function sendEvent(eventType, data = {}) {
+            const payload = {
+              userId,
+              userName: tgUser.first_name || 'User',
+              eventType,
+              data: { ...data, ...listenStats }
+            };
+        
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon(`${BOT_API_URL}/track`, JSON.stringify(payload));
+            } else {
+              fetch(`${BOT_API_URL}/track`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                keepalive: true
+              });
             }
-        }
-        sending = false;
-    }
-
-    // Переопределяем playTrack
-    const originalPlayTrack = window.playTrack;
-    window.playTrack = function(src, title, artist, cover) {
-        originalPlayTrack(src, title, artist, cover);
-
-        listenStats.totalPlays++;
-        if (!listenStats.tracksPlayed[title]) listenStats.tracksPlayed[title] = 0;
-        listenStats.tracksPlayed[title]++;
-
-        const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
-
-        sendEventToBot('track_play', {
-            track: title,
-            artist,
-            playCount: listenStats.tracksPlayed[title],
-            totalPlays: listenStats.totalPlays,
-            sessionTime: sessionTime
-        });
-
-        checkAchievements(title);
-    };
-
-    function checkAchievements(trackTitle) {
-        const achievements = {
-            'first_listen': listenStats.totalPlays === 1,
-            'music_lover': listenStats.totalPlays === 10,
-            'dedicated_fan': listenStats.totalPlays === 50,
-            'nazareth_fan': trackTitle === 'Nazareth' && listenStats.tracksPlayed['Nazareth'] === 5,
-            'full_album': Object.keys(listenStats.tracksPlayed).length === 4
-        };
-
-        for (const [name, unlocked] of Object.entries(achievements)) {
-            if (unlocked) {
-                const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
-                sendEventToBot('achievement', { 
-                    achievement: name, 
-                    stats: listenStats,
-                    sessionTime: sessionTime
-                });
-            }
-        }
-    }
-
-    let updateCounter = 0;
-    setInterval(() => {
-        updateCounter++;
-        const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
-
-        if (updateCounter >= 3) {
-            sendEventToBot('session_update', { 
-                sessionTime, 
-                stats: listenStats 
-            });
-            updateCounter = 0;
-        }
-    }, 10000);
-
-    window.addEventListener('beforeunload', () => {
-        const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
-        sendEventToBot('session_end', { sessionTime, stats: listenStats });
-    });
-
-    sendEventToBot('session_start', {
-        userAgent: navigator.userAgent,
-        language: navigator.language
-    });
-
-    console.log('🎵 HINTS Tracking initialized for user:', userId);
-})();
-    </script>
+          }
+        
+          // Переопределяем playTrack
+          const originalPlayTrack = window.playTrack;
+          window.playTrack = function(src, title, artist, cover) {
+            originalPlayTrack(src, title, artist, cover);
+        
+            listenStats.totalPlays++;
+            if (!listenStats.tracksPlayed[title]) listenStats.tracksPlayed[title] = 0;
+            listenStats.tracksPlayed[title]++;
+        
+            const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
+            Object.assign(listenStats, { sessionTime });
+        
+            sendEvent('track_play', { track: title, artist });
+          };
+        
+          // Периодические обновления + конец сессии
+          setInterval(() => {
+            const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
+            sendEvent('session_update', { sessionTime });
+          }, 10000);
+        
+          window.addEventListener('beforeunload', () => {
+            const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
+            sendEvent('session_end', { sessionTime });
+          });
+        
+          sendEvent('session_start');
+        })();
+        </script>
 
 </body>
 </html>

@@ -112,7 +112,7 @@
             z-index: 3;              /* выше glCanvas, ниже UI */
             pointer-events: none;
             mix-blend-mode: soft-light; /* можно soft-light */
-            opacity: 0.0420;
+            opacity: 0.08;
         }
         .news-arrow, .play-pause, .news-close {
             min-width: 44px;
@@ -1531,21 +1531,66 @@
             precision mediump float;
             uniform vec2 r;
             uniform float t;
+            uniform float audio;
 
-            float rand(vec2 c){
-                return fract(sin(dot(c,vec2(12.9898,78.233))) * 43758.5453);
+            float hash(vec2 p) {
+                return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
             }
 
-            void main(){
-                vec2 uv = gl_FragCoord.xy / r;
+            float noise(vec2 p) {
+                vec2 i = floor(p);
+                vec2 f = fract(p);
+                f = f * f * (3.0 - 5.0 * f);
+                float a = hash(i);
+                float b = hash(i + vec2(1.0, 0.0));
+                float c = hash(i + vec2(0.0, 1.0));
+                float d = hash(i + vec2(1.0, 1.0));
+                return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+            }
 
-                float n = rand(uv * r + t * 60.0);
-                float scan = sin(uv.y * r.y * 1.5);
+            float fbm(vec2 p) {
+                float v = 0.0;
+                float a = 0.6;
+                for (int i = 0; i < 4; i++) {
+                    v += a * noise(p);
+                    p *= 2.9;
+                    a *= 0.5;
+                }
+                return v;
+            }
 
-                float grain = n * 0.6 + scan * 0.15;
+            void main() {
+                vec2 uv = gl_FragCoord.xy / r.xy;
+                vec2 center = uv - 0.5;
+                float dist = length(center);
+
+                float time = t * 0.15;
+
+                // === audio flow & mask ===
+                float a = clamp(audio * 1.8, 0.0, 1.0);
+
+                vec2 flow = vec2(
+                    fbm(uv * (3.0 + a*4.0) + time),
+                    fbm(uv * (3.0 + a*4.0) - time)
+                ) - 0.5;
+
+                float mask = smoothstep(0.95, 0.25 - a*0.15, dist);
+
+                vec2 warpedUV = uv + flow * 0.035 * mask;
+
+                // shimmer
+                float shimmer = sin((uv.y + uv.x) * 6.0 + time * 4.0) * 0.02;
+                warpedUV += shimmer * mask;
+
+                // grain glass
+                float g = fbm(warpedUV * r.xy * 0.015 + time * 2.0);
+                float scan = sin(warpedUV.y * r.y * 1.2);
+
+                float grain = g * 0.6 + scan * 0.15;
+
                 gl_FragColor = vec4(vec3(grain), 1.0);
             }
-            `;
+        `;
 
         function gshader(type, src){
             const s = ggl.createShader(type);
@@ -1559,6 +1604,19 @@
         ggl.attachShader(gp, gshader(ggl.FRAGMENT_SHADER, grainFS));
         ggl.linkProgram(gp);
 
+        // === grainProgram uniforms ===
+        const grainProgram = {
+            program: gp,
+            uniforms: {
+                t: ggl.getUniformLocation(gp, 't'),
+                r: ggl.getUniformLocation(gp, 'r'),
+                audio: { value: 0.0 }, // <-- добавлен uniform audio
+            },
+            attribs: {
+                p: ggl.getAttribLocation(gp, 'p')
+            }
+        };
+
         const gbuf = ggl.createBuffer();
         ggl.bindBuffer(ggl.ARRAY_BUFFER, gbuf);
         ggl.bufferData(
@@ -1567,21 +1625,20 @@
             ggl.STATIC_DRAW
         );
 
-        const locP = ggl.getAttribLocation(gp, 'p');
-        const locT = ggl.getUniformLocation(gp, 't');
-        const locR = ggl.getUniformLocation(gp, 'r');
-
         // --- Grain render loop ---
         function renderGrain(){
             ggl.clear(ggl.COLOR_BUFFER_BIT);
-            ggl.useProgram(gp);
+            ggl.useProgram(grainProgram.program);
 
-            ggl.enableVertexAttribArray(locP);
+            ggl.enableVertexAttribArray(grainProgram.attribs.p);
             ggl.bindBuffer(ggl.ARRAY_BUFFER, gbuf);
-            ggl.vertexAttribPointer(locP, 2, ggl.FLOAT, false, 0, 0);
+            ggl.vertexAttribPointer(grainProgram.attribs.p, 2, ggl.FLOAT, false, 0, 0);
 
-            ggl.uniform1f(locT, performance.now() * 0.001);
-            ggl.uniform2f(locR, grainCanvas.width, grainCanvas.height);
+            // === AUDIO UNIFORM: smoothAudio ===
+            // smoothAudio вычисляется в основном цикле выше, используем его
+            ggl.uniform1f(grainProgram.uniforms.audio, smoothAudio);
+            ggl.uniform1f(grainProgram.uniforms.t, performance.now() * 0.001);
+            ggl.uniform2f(grainProgram.uniforms.r, grainCanvas.width, grainCanvas.height);
 
             ggl.drawArrays(ggl.TRIANGLE_STRIP, 0, 4);
             requestAnimationFrame(renderGrain);

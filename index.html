@@ -1329,6 +1329,22 @@
                 color = mix(vec3(avg), color, 1.2);
                 color = clamp(color,0.0,1.0);
 
+                // --- Цветной мягкий шлейф ---
+                vec2 trailOffset = vec2(
+                    sin(u_time*0.3 + uv.y*5.0) * 0.02,
+                    cos(u_time*0.25 + uv.x*5.0) * 0.02
+                );
+
+                // Накопление цвета для шлейфа
+                vec3 trailLayer = vec3(0.0);
+                for(int i=0;i<5;i++){
+                    vec2 offsetUV = displacedUV - trailOffset * float(i) * 0.8;
+                    float alpha = 0.2 / float(i+1); // уменьшаем интенсивность
+                    trailLayer += mix(pink, cyan, softNoise(offsetUV*2.5 + u_time*0.1)) * alpha;
+                }
+
+                color = mix(color, trailLayer, 0.75);
+
                 gl_FragColor = vec4(color*1.08,0.96);
             }
         `;

@@ -1681,7 +1681,7 @@
                     const dx = (x / w - 0.5) * 2.0;
                     const dy = (y / h - 0.5) * 2.0;
                     const r = Math.sqrt(dx*dx + dy*dy);
-                    const strength = 0.35; // сила линзы
+                    const strength = 0.65; // усиленная сила линзы
                     const factor = 1.0 - strength * r*r;
                     const idx = (y*w + x)*4;
                     data[idx + 0] = data[idx + 0] * factor;

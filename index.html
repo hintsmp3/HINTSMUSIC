@@ -112,7 +112,7 @@
             z-index: 3;              /* выше glCanvas, ниже UI */
             pointer-events: none;
             mix-blend-mode: soft-light; /* можно soft-light */
-            opacity: 0.0420;
+            opacity: 0.0061;
         }
         .news-arrow, .play-pause, .news-close {
             min-width: 44px;
@@ -1778,7 +1778,7 @@
             for (let i=0; i<data.length; i+=4) {
                 const nx = (i/4)%w;
                 const ny = Math.floor((i/4)/w);
-                const n = noise(nx*0.1 + performance.now()*0.001, ny*0.1);
+                const n = noise(nx*0.161 + performance.now()*0.001, ny*0.1);
                 data[i] += n*30*audioLevel;     // R
                 data[i+1] += n*20*audioLevel;   // G
                 data[i+2] += n*25*audioLevel;   // B
@@ -1792,7 +1792,7 @@
                     const dx = (x / w - 0.5) * 2.0;
                     const dy = (y / h - 0.5) * 2.0;
                     const r = Math.sqrt(dx*dx + dy*dy);
-                    const strength = 0.65; // усиленная сила линзы
+                    const strength = 0.66; // усиленная сила линзы
                     const factor = 1.0 - strength * r*r;
                     const idx = (y*w + x)*4;
                     data[idx + 0] = data[idx + 0] * factor;

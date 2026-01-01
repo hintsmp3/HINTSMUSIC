@@ -1273,6 +1273,12 @@
                 vec2 p = uv*2.0 - 1.0;
                 p.x *= u_resolution.x/u_resolution.y;
 
+                // --- Lens distortion (стеклянная линза) ---
+                float r = length(p);
+                float strength = 0.35; // сила линзы, 0.0 = нет эффекта, 1.0 = сильное искажение
+                vec2 lensUV = p * (1.0 - strength * r*r);
+                p = mix(p, lensUV, 0.7); // смешиваем с оригиналом, 0.7 = баланс эффекта
+
                 // --- Динамический центр, распределение по экрану ---
                 vec2 drift = vec2(
                     sin(u_time*0.12 + uv.y*3.1) * 0.18,

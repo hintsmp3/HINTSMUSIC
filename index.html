@@ -1373,8 +1373,9 @@
         const resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
         const audioLocation = gl.getUniformLocation(program, 'u_audio');
 
-        let startTime = Date.now();
-        let smoothAudio = 0.01;
+let startTime = Date.now();
+let smoothAudio = 0.01;
+let smoothAudioLast = 0.01;
 
         function render() {
             analyser.getByteFrequencyData(dataArray);
@@ -1387,8 +1388,11 @@
             const rise = 0.15;  // скорость реакции на удар
             const fall = 0.01;  // скорость затухания
 
+            // Two-stage smoothing for more natural response
             const delta = rawAudio - smoothAudio;
             smoothAudio += delta * (delta > 0.0 ? rise : fall);
+            const deltaLast = smoothAudio - smoothAudioLast;
+            smoothAudioLast += deltaLast * (deltaLast > 0.0 ? rise : fall);
 
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
@@ -1401,7 +1405,7 @@
 
             gl.uniform1f(timeLocation, (Date.now() - startTime) / 1000.0);
             gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
-            gl.uniform1f(audioLocation, smoothAudio);
+            gl.uniform1f(audioLocation, smoothAudioLast);
 
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 

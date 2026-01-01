@@ -1310,26 +1310,9 @@
                 vec3 idleLayer = color;
                 vec3 bassLayer = mix(hotpink, cyan, 0.5);
                 float bassAlpha = smoothstep(0.05, 0.6, bass)*0.48;
-                // --- Мягкая цветная пульсация и шлейф ---
-                vec2 trailOffset = vec2(
-                    sin(u_time*0.8 + displacedUV.y*5.0)*0.02,
-                    cos(u_time*0.7 + displacedUV.x*4.0)*0.02
-                );
-
-                vec3 trailColor = mix(
-                    color,
-                    vec3(
-                        sin(displacedUV.x*10.0 + u_time*1.5)*0.5 + 0.5,
-                        sin(displacedUV.y*8.0 - u_time*1.2)*0.5 + 0.5,
-                        cos((displacedUV.x+displacedUV.y)*6.0 + u_time*1.7)*0.5 + 0.5
-                    ),
-                    0.18
-                );
-
-                color = mix(color, trailColor, 0.35);
-
-                // --- Существующий бас/пульс слой ---
-                color = mix(color, idleLayer + bassLayer*0.28, bassAlpha);
+                color = mix(idleLayer, idleLayer + bassLayer*0.28, bassAlpha);
+                color += hotpink*audioPulse*0.32;
+                color += cyan*audioPulse*0.24;
 
                     // --- Мягкая виньетка, но без белого снизу ---
                 float vignette = smoothstep(1.25, 0.0, length(p));

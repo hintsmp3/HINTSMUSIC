@@ -529,15 +529,16 @@
             width: 100%; height: 100%;
             border-radius: 50%;
             pointer-events: none;
-            z-index: 2;
+            z-index: 2; 
 
-            /* тонкая внешняя текстура (виниловый рельеф) с чистым центром */
+            /* тонкая внешняя текстура (виниловый рельеф) */
             background:
-                radial-gradient(circle, 
-                    rgba(0,0,0,0) 0% 14%,          /* чистый центр */
-                    rgba(255,255,255,0.03) 14% 15%, 
-                    rgba(255,255,255,0.03) 15% 16%, 
-                    rgba(0,0,0,0.02) 16% 100%
+                repeating-radial-gradient(
+                    circle,
+                    rgba(255,255,255,0.03) 0px,
+                    rgba(255,255,255,0.03) 1px,
+                    rgba(0,0,0,0.02) 2px,
+                    rgba(0,0,0,0.02) 3px
                 );
             transform: rotate(0deg);
         }

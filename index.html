@@ -647,6 +647,39 @@
             mask-image: radial-gradient(circle, transparent 0 18%, black 19%);
         }
 
+        .track-cover::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 2;
+
+            /* виниловые дорожки в плеере */
+            background:
+                repeating-radial-gradient(
+                    circle,
+                    rgba(255,255,255,0.03) 0px,
+                    rgba(255,255,255,0.03) 1px,
+                    rgba(0,0,0,0.02) 2px,
+                    rgba(0,0,0,0.02) 3px
+                );
+
+            /* плавное исчезновение к дырке */
+            -webkit-mask-image: radial-gradient(
+                circle,
+                transparent 0%,
+                rgba(0,0,0,0.25) 22%,
+                black 100%
+            );
+            mask-image: radial-gradient(
+                circle,
+                transparent 0%,
+                rgba(0,0,0,0.25) 22%,
+                black 100%
+            );
+        }
+
         .track-cover::after {
             content: '';
             position: absolute;

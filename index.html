@@ -453,19 +453,31 @@
             border-radius: 28px;
             background: rgba(255,255,255,0.04);
             box-shadow:
-                inset 0 0 0 1px rgba(255,255,255,0.06),
                 0 12px 40px rgba(255,105,255,0.15);
             transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
             position: relative;
         }
 
-        .release.active {
-            transform: translateY(-3px);
-            background: rgba(255,255,255,0.085);
+        .release.playing {
+            background: rgba(255,255,255,0.06);
+            transform: translateY(-2px);
             box-shadow:
-                inset 0 0 0 1px rgba(255,255,255,0.18),
-                0 0 22px rgba(255,105,255,0.35),
-                0 18px 54px rgba(255,105,255,0.45);
+                0 0 18px rgba(255,105,255,0.35),
+                inset 0 0 0 1px rgba(255,255,255,0.08);
+        }
+
+        .release.playing p {
+            text-shadow: 0 0 12px rgba(255,105,255,0.8);
+        }
+        .listen-count {
+            position: absolute;
+            right: 22px;
+            bottom: 18px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 0.9em;
+            opacity: 0.55;
+            letter-spacing: 1px;
+            pointer-events: none;
         }
 
 
@@ -485,11 +497,6 @@
             border-radius: 50%;
             transition: all 0.4s ease;
             box-shadow: 0 0 40px rgba(255, 105, 255, 0.6);
-        }
-
-        .release.active img {
-            transform: translateX(2px) rotate(1.2deg);
-            box-shadow: 0 0 48px rgba(255,105,255,0.75);
         }
 
         /* .release:hover img - не нужен, современный стиль без увеличения */
@@ -929,18 +936,6 @@
             }
         }    
         }
-
-        .release-meta {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .plays {
-            font-size: 0.72em;
-            opacity: 0.55;
-            letter-spacing: 1px;
-        }
     </style>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -1001,44 +996,36 @@
         </div>
 
         <div class="releases">
-            <div class="release" data-title="Nazareth" data-plays="0" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
+            <div class="release" data-title="Nazareth" onclick="playTrack('track1.mp3', 'Nazareth', 'Slut Online, lindtayl0r', 'IMG_7852.jpeg')">
                 <div class="vinyl">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7852.jpeg" alt="Nazareth" loading="lazy">
                 </div>
-                <div class="release-meta">
-                    <p>Slut Online, lindtayl0r - Nazareth</p>
-                    <span class="plays">0 listens</span>
-                </div>
+                <p>Slut Online, lindtayl0r - Nazareth</p>
+                <span class="listen-count" data-count="0">0 plays</span>
             </div>
 
-            <div class="release" data-title="Sex & Limbo" data-plays="0" onclick="playTrack('track2.mp3', 'Sex & Limbo', 'Slut Online, lindtayl0r', 'IMG_7855.jpeg')">
+            <div class="release" data-title="Sex & Limbo" onclick="playTrack('track2.mp3', 'Sex & Limbo', 'Slut Online, lindtayl0r', 'IMG_7855.jpeg')">
                 <div class="vinyl">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7855.jpeg" alt="Sex & Limbo" loading="lazy">
                 </div>
-                <div class="release-meta">
-                    <p>Slut Online, lindtayl0r - Sex & Limbo</p>
-                    <span class="plays">0 listens</span>
-                </div>
+                <p>Slut Online, lindtayl0r - Sex & Limbo</p>
+                <span class="listen-count" data-count="0">0 plays</span>
             </div>
 
-            <div class="release" data-title="SPACEDUST" data-plays="0" onclick="playTrack('track3.mp3', 'SPACEDUST', 'Unknown', 'IMG_7856.jpeg')">
+            <div class="release" data-title="SPACEDUST" onclick="playTrack('track3.mp3', 'SPACEDUST', 'Unknown', 'IMG_7856.jpeg')">
                 <div class="vinyl">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7856.jpeg" alt="SPACEDUST" loading="lazy">
                 </div>
-                <div class="release-meta">
-                    <p>SPACEDUST</p>
-                    <span class="plays">0 listens</span>
-                </div>
+                <p>SPACEDUST</p>
+                <span class="listen-count" data-count="0">0 plays</span>
             </div>
 
-            <div class="release" data-title="Interstellar" data-plays="0" onclick="playTrack('track4.mp3', 'Interstellar', 'XSDC', 'IMG_7857.jpeg')">
+            <div class="release" data-title="Interstellar" onclick="playTrack('track4.mp3', 'Interstellar', 'XSDC', 'IMG_7857.jpeg')">
                 <div class="vinyl">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7857.jpeg" alt="Interstellar" loading="lazy">
                 </div>
-                <div class="release-meta">
-                    <p>XSDC - Interstellar</p>
-                    <span class="plays">0 listens</span>
-                </div>
+                <p>XSDC - Interstellar</p>
+                <span class="listen-count" data-count="0">0 plays</span>
             </div>
         </div>
 
@@ -1186,12 +1173,21 @@
             trackArtist.textContent = artist || 'Unknown';
             trackCover.src = cover;
 
-            document.querySelectorAll('.vinyl').forEach(v => {
-                v.classList.remove('playing');
+            document.querySelectorAll('.release').forEach(r => {
+                r.classList.remove('playing');
             });
 
             const activeRelease = document.querySelector(`.release[data-title="${title}"]`);
             if (activeRelease) {
+                activeRelease.classList.add('playing');
+
+                const counter = activeRelease.querySelector('.listen-count');
+                if (counter) {
+                    let c = parseInt(counter.dataset.count || '0', 10) + 1;
+                    counter.dataset.count = c;
+                    counter.textContent = c + ' plays';
+                }
+
                 const vinyl = activeRelease.querySelector('.vinyl');
                 if (vinyl) vinyl.classList.add('playing');
             }
@@ -2004,20 +2000,5 @@
         })();
         </script>
 
-    <script>
-        // === ACTIVE STATE + PLAYS COUNTER ===
-        document.querySelectorAll('.release').forEach(function(release) {
-            release.addEventListener('click', function() {
-                document.querySelectorAll('.release').forEach(r => r.classList.remove('active'));
-                this.classList.add('active');
-
-                let plays = parseInt(this.dataset.plays || 0) + 1;
-                this.dataset.plays = plays;
-                this.querySelector('.plays').textContent = plays + ' listens';
-            });
-        });
-    </script>
-
 </body>
 </html>
-

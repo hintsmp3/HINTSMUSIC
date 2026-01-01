@@ -1264,7 +1264,7 @@
                 );
                 p += drift;
 
-            // --- Фрактальный шум-дрейф ---
+                // --- Фрактальный шум-дрейф ---
                 float fn = 0.0;
                 vec2 fp = p;
                 for(int i=0;i<3;i++){
@@ -1301,20 +1301,24 @@
                 color = mix(color, purple, waves*0.6);
 
                 // --- Бас-слой и пульс ---
-                float pulse = 0.85 + 0.25*sin(u_time*0.6 + length(displacedUV)*1.8);
-                pulse += bass*0.5;
-                color *= pulse;
+                float bassPulse = sin(u_time*3.0 + length(displacedUV)*8.0)*0.5 + 0.5;
+                bassPulse *= pow(bass, 1.6); // усиление реакции на сильный бас
 
-                float audioPulse = sin(u_time*2.0 + length(displacedUV)*6.0)*0.5 + 0.5;
-                audioPulse *= bass*1.5;
-                vec3 idleLayer = color;
-                vec3 bassLayer = mix(hotpink, cyan, 0.5);
-                float bassAlpha = smoothstep(0.05, 0.6, bass)*0.48;
-                color = mix(idleLayer, idleLayer + bassLayer*0.28, bassAlpha);
-                color += hotpink*audioPulse*0.32;
-                color += cyan*audioPulse*0.24;
+                // Мягкий хвост за басом
+                float trail = smoothstep(0.0, 1.0, bassPulse) * 0.5;
 
-                    // --- Мягкая виньетка, но без белого снизу ---
+                // Цветовой акцент на бас
+                vec3 bassAccent = mix(bassBlue, cyan, trail);
+
+                // Добавляем к основному цвету
+                color = mix(color, color + bassAccent*0.6, trail);
+
+                // Дополнительный subtle пульс всего фона по басу
+                float globalPulse = 0.85 + 0.25*sin(u_time*0.6 + length(displacedUV)*2.2);
+                globalPulse += bass*0.3;
+                color *= globalPulse;
+
+                // --- Мягкая виньетка, но без белого снизу ---
                 float vignette = smoothstep(1.25, 0.0, length(p));
                 color *= mix(0.45,1.2,vignette);
 

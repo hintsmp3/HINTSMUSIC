@@ -1674,20 +1674,44 @@
                 // Alpha остаётся из gradient
             }
 
-            // --- Lens distortion (стеклянная линза) ---
-            // После применения шума, до putImageData.
-            for (let y = 0; y < h; y++) {
-                for (let x = 0; x < w; x++) {
-                    const dx = (x / w - 0.5) * 2.0;
-                    const dy = (y / h - 0.5) * 2.0;
-                    const r = Math.sqrt(dx*dx + dy*dy);
-                    const strength = 0.65; // усиленная сила линзы
-                    const factor = 1.0 - strength * r*r;
-                    const idx = (y*w + x)*4;
-                    data[idx + 0] = data[idx + 0] * factor;
-                    data[idx + 1] = data[idx + 1] * factor;
-                    data[idx + 2] = data[idx + 2] * factor;
-                    // alpha не трогаем
+            // --- TRUE MAGNIFYING LENS (реальное увеличение фона под плеером) ---
+            const bgCanvas = document.getElementById('glCanvas');
+            if (bgCanvas) {
+                const cx = w * 0.5;
+                const cy = h * 0.5;
+
+                const lensStrength = 0.35 + audioLevel * 0.6; // сила увеличения
+                const radius = Math.min(w, h) * 0.48;
+
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        const dx = x - cx;
+                        const dy = y - cy;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+
+                        if (dist < radius) {
+                            const norm = dist / radius;
+                            const zoom = 1.0 + lensStrength * (1.0 - norm * norm);
+
+                            const sx = cx + dx / zoom;
+                            const sy = cy + dy / zoom;
+
+                            const bx = Math.floor((sx / w) * bgCanvas.width);
+                            const by = Math.floor((sy / h) * bgCanvas.height);
+
+                            if (
+                                bx >= 0 && bx < bgCanvas.width &&
+                                by >= 0 && by < bgCanvas.height
+                            ) {
+                                const src = (by * bgCanvas.width + bx) * 4;
+                                const dst = (y * w + x) * 4;
+
+                                data[dst + 0] = data[dst + 0] * 0.4 + imageData.data[src + 0] * 0.6;
+                                data[dst + 1] = data[dst + 1] * 0.4 + imageData.data[src + 1] * 0.6;
+                                data[dst + 2] = data[dst + 2] * 0.4 + imageData.data[src + 2] * 0.6;
+                            }
+                        }
+                    }
                 }
             }
 

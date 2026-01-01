@@ -447,28 +447,31 @@
         .release {
             cursor: pointer;
             position: relative;
-            display: flex;
+            display: grid;
+            grid-template-columns: 88px 1fr;
             align-items: center;
-            gap: 28px;
-            transition: transform 0.35s ease, opacity 0.35s ease;
+            gap: 24px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
         }
 
 
         .release:hover {
-            transform: translateX(6px);
+            transform: translateX(4px);
         }
 
         .release img {
-            width: 96px;
-            height: 96px;
+            width: 88px;
+            height: 88px;
             object-fit: cover;
             border-radius: 50%;
-            transition: transform 0.4s ease, filter 0.4s ease;
+            transition: transform 0.3s ease, filter 0.3s ease;
+            will-change: transform;
         }
 
         .release:hover img {
-            transform: scale(1.05);
-            filter: brightness(1.15) saturate(1.1);
+            transform: scale(1.02);
+            filter: brightness(1.1);
         }
 
         /* === VINYL HOLE EFFECT === */
@@ -479,6 +482,8 @@
             -webkit-mask-image: radial-gradient(circle, transparent 0 14%, black 15%);
             mask-image: radial-gradient(circle, transparent 0 14%, black 15%);
             flex-shrink: 0;
+            width: 88px;
+            height: 88px;
         }
 
         .vinyl img {
@@ -562,13 +567,18 @@
 
 
         .release p {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
             font-family: 'Bebas Neue', 'Impact', sans-serif;
             margin: 0;
             font-size: 1.05em;
-            letter-spacing: 2px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+            letter-spacing: 1.8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
             opacity: 0.85;
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition: opacity 0.25s ease;
         }
 
         .release:hover p {
@@ -577,11 +587,10 @@
         }
 
         .track-plays {
-            margin-left: 12px;
-            font-size: 0.85em;
+            flex-shrink: 0;
+            font-size: 0.8em;
             opacity: 0.55;
             letter-spacing: 1px;
-            transition: opacity 0.3s ease;
         }
         .release:hover .track-plays {
             opacity: 0.85;
@@ -1920,6 +1929,13 @@
             sessionStart: Date.now()
           };
 
+          // Load saved plays from localStorage
+          const savedPlays = JSON.parse(localStorage.getItem('trackPlays') || '{}');
+          listenStats.tracksPlayed = savedPlays;
+          Object.entries(savedPlays).forEach(([track, count]) => {
+              updatePlaysUI(track, count);
+          });
+
           function updatePlaysUI(track, count) {
               const el = document.querySelector(`.track-plays[data-track="${track}"]`);
               if (el) el.textContent = count;
@@ -1953,6 +1969,8 @@
             listenStats.totalPlays++;
             if (!listenStats.tracksPlayed[title]) listenStats.tracksPlayed[title] = 0;
             listenStats.tracksPlayed[title]++;
+            // Save to localStorage after increment
+            localStorage.setItem('trackPlays', JSON.stringify(listenStats.tracksPlayed));
             updatePlaysUI(title, listenStats.tracksPlayed[title]);
 
             const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
@@ -1978,3 +1996,7 @@
 
 </body>
 </html>
+        .track-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }

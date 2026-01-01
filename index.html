@@ -576,6 +576,17 @@
             transform: translateX(4px);
         }
 
+        .track-plays {
+            margin-left: 12px;
+            font-size: 0.85em;
+            opacity: 0.55;
+            letter-spacing: 1px;
+            transition: opacity 0.3s ease;
+        }
+        .release:hover .track-plays {
+            opacity: 0.85;
+        }
+
         .custom-player {
             position: fixed;
             bottom: 24px;
@@ -960,28 +971,40 @@
                 <div class="vinyl">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7852.jpeg" alt="Nazareth" loading="lazy">
                 </div>
-                <p>Slut Online, lindtayl0r - Nazareth</p>
+                <p>
+                  <span class="track-name">Slut Online, lindtayl0r - Nazareth</span>
+                  <span class="track-plays" data-track="Nazareth">0</span>
+                </p>
             </div>
 
             <div class="release" data-title="Sex & Limbo" onclick="playTrack('track2.mp3', 'Sex & Limbo', 'Slut Online, lindtayl0r', 'IMG_7855.jpeg')">
                 <div class="vinyl">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7855.jpeg" alt="Sex & Limbo" loading="lazy">
                 </div>
-                <p>Slut Online, lindtayl0r - Sex & Limbo</p>
+                <p>
+                  <span class="track-name">Slut Online, lindtayl0r - Sex & Limbo</span>
+                  <span class="track-plays" data-track="Sex & Limbo">0</span>
+                </p>
             </div>
 
             <div class="release" data-title="SPACEDUST" onclick="playTrack('track3.mp3', 'SPACEDUST', 'Unknown', 'IMG_7856.jpeg')">
                 <div class="vinyl">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7856.jpeg" alt="SPACEDUST" loading="lazy">
                 </div>
-                <p>SPACEDUST</p>
+                <p>
+                  <span class="track-name">SPACEDUST</span>
+                  <span class="track-plays" data-track="SPACEDUST">0</span>
+                </p>
             </div>
 
             <div class="release" data-title="Interstellar" onclick="playTrack('track4.mp3', 'Interstellar', 'XSDC', 'IMG_7857.jpeg')">
                 <div class="vinyl">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7857.jpeg" alt="Interstellar" loading="lazy">
                 </div>
-                <p>XSDC - Interstellar</p>
+                <p>
+                  <span class="track-name">XSDC - Interstellar</span>
+                  <span class="track-plays" data-track="Interstellar">0</span>
+                </p>
             </div>
         </div>
 
@@ -1896,6 +1919,11 @@
             tracksPlayed: {},
             sessionStart: Date.now()
           };
+
+          function updatePlaysUI(track, count) {
+              const el = document.querySelector(`.track-plays[data-track="${track}"]`);
+              if (el) el.textContent = count;
+          }
         
           async function sendEvent(eventType, data = {}) {
             const payload = {
@@ -1921,14 +1949,15 @@
           const originalPlayTrack = window.playTrack;
           window.playTrack = function(src, title, artist, cover) {
             originalPlayTrack(src, title, artist, cover);
-        
+
             listenStats.totalPlays++;
             if (!listenStats.tracksPlayed[title]) listenStats.tracksPlayed[title] = 0;
             listenStats.tracksPlayed[title]++;
-        
+            updatePlaysUI(title, listenStats.tracksPlayed[title]);
+
             const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
             Object.assign(listenStats, { sessionTime });
-        
+
             sendEvent('track_play', { track: title, artist });
           };
         

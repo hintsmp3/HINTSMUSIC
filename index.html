@@ -1220,7 +1220,7 @@
             #define BLUR_SAMPLES 5
             uniform float u_time;
             uniform vec2 u_resolution;
-            uniform float u_audio; // средняя громкость (0-1)
+            uniform float u_audio;
 
             // --- Аудио сглаживание и бас ---
             float audio = smoothstep(0.03, 0.6, u_audio);
@@ -1231,239 +1231,105 @@
             vec3 magenta = vec3(1.0, 0.2, 0.9);
             vec3 purple = vec3(0.7, 0.1, 1.0);
             vec3 cyan = vec3(0.3, 1.0, 1.0);
-            vec3 white = vec3(0.96, 0.93, 0.98);
             vec3 bassBlue = vec3(0.25, 0.05, 1.0);
-            float antiWhiteBass = 1.0 - smoothstep(0.25, 0.75, bass);
             vec3 spectralWhite = vec3(0.85, 0.75, 0.95);
 
-            // [1] Новый softNoise
+            // --- Soft noise ---
             float hash(vec2 p){
                 p = fract(p * vec2(123.34, 456.21));
-                p += dot(p, p + 45.32);
-                return fract(p.x * p.y);
+                p += dot(p,p+45.32);
+                return fract(p.x*p.y);
             }
 
             float softNoise(vec2 p){
                 vec2 i = floor(p);
                 vec2 f = fract(p);
                 f = f*f*(3.0-2.0*f);
-
                 float a = hash(i);
-                float b = hash(i + vec2(1.0, 0.0));
-                float c = hash(i + vec2(0.0, 1.0));
-                float d = hash(i + vec2(1.0, 1.0));
-
-                return mix(mix(a, b, f.x), mix(c, d, f.x), f.y) * 0.9;
+                float b = hash(i+vec2(1.0,0.0));
+                float c = hash(i+vec2(0.0,1.0));
+                float d = hash(i+vec2(1.0,1.0));
+                return mix(mix(a,b,f.x), mix(c,d,f.x), f.y)*0.9;
             }
 
             void main() {
                 vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-                vec2 p = uv * 2.0 - 1.0;
-                p.x *= u_resolution.x / u_resolution.y;
+                vec2 p = uv*2.0 - 1.0;
+                p.x *= u_resolution.x/u_resolution.y;
 
-                // --- микро-смещение системы координат (убивает физический центр)
-                vec2 pseudoCenter = vec2(
-                    softNoise(uv * 1.66 + u_time * 0.03),
-                    softNoise(uv.yx * 1.3 - u_time * 0.027)
-                ) - 0.5;
+                // --- Динамический центр, распределение по экрану ---
+                vec2 drift = vec2(
+                    sin(u_time*0.12 + uv.y*3.1) * 0.18,
+                    cos(u_time*0.15 + uv.x*2.7) * 0.18
+                );
+                p += drift;
 
-                p += pseudoCenter * 0.18;
-
-                // [2] Фрактальный шум-дрейф
+            // --- Фрактальный шум-дрейф ---
                 float fn = 0.0;
                 vec2 fp = p;
-                for(int i=0;i<2;i++){
-                    fn += softNoise(fp + u_time*0.04) * (0.6 / float(i+1));
-                    fp = fp * 1.6 + 0.15;
+                for(int i=0;i<3;i++){
+                    fn += softNoise(fp + u_time*0.04) * (0.5/float(i+1));
+                    fp = fp*1.6 + 0.15;
                 }
-                p += fn * (0.14 + bass * 0.35);
+                p += fn*(0.12 + bass*0.28);
 
-                float n = softNoise(p * 3.0 + u_time * 0.2);
-                p += vec2(
-                    softNoise(p + u_time * 0.3),
-                    softNoise(p.yx - u_time * 0.25)
-                ) * 0.12 * (0.4 + u_audio);
+                // --- Локальный органический warp ---
+                float t = u_time*0.14;
+                vec2 warp = vec2(sin(p.y*3.7+t), cos(p.x*4.1-t));
+                p += warp*(0.035 + bass*0.12);
 
-                // --- Органическая асимметрия ---
-                float t = u_time * 0.15;
-                vec2 warp = vec2(
-                    sin(p.y * 3.7 + t),
-                    cos(p.x * 4.1 - t)
-                );
-                p += warp * (0.045 + bass * 0.18);
-
-                // === Сильный бас-дисплейсмент ===
-                float bassReact = u_audio * u_audio * 2.6;
-                // [4] Новый жидкий displace (анти-радиальный)
+                // --- Жидкий displace ---
                 vec2 displace = vec2(
-                    softNoise(p.yx * 2.2 + u_time * 0.5),
-                    softNoise(p.xy * 2.0 - u_time * 0.4)
-                ) * (0.28 + bassReact * 0.9);
-                float angle = atan(p.y, p.x);
-                displace += p * sin(angle * 6.0 + u_time * 1.5) * bassReact * 0.08;
-
+                    softNoise(p.yx*2.0 + u_time*0.42),
+                    softNoise(p.xy*1.8 - u_time*0.38)
+                )*(0.24 + bass*0.72);
                 vec2 displacedUV = p + displace;
-                float displacedDist = dot(abs(displacedUV), vec2(0.85, 1.15));
-                displacedDist += softNoise(displacedUV * 3.5 + u_time * 0.3) * 0.25;
 
-                // === Новый flowNoise вместо колец ===
-                float flowNoise =
-                    softNoise(displacedUV * 2.4 + u_time * 0.22) +
-                    softNoise(displacedUV.yx * 1.7 - u_time * 0.18);
-
+                // --- Flow noise и маска ---
+                float flowNoise = softNoise(displacedUV*2.4 + u_time*0.22) + softNoise(displacedUV.yx*1.7 - u_time*0.18);
                 float flowMask = smoothstep(-0.3, 0.7, flowNoise);
 
-                // === Цветовая логика ===
-                vec3 color =
-                    mix(pink, hotpink, softNoise(displacedUV * 1.3 + u_time * 0.12));
+                // --- Основная цветовая логика ---
+                vec3 color = mix(pink, hotpink, softNoise(displacedUV*1.3 + u_time*0.12));
+                color = mix(color, magenta, softNoise(displacedUV*2.1 - u_time*0.18)*0.55);
+                color = mix(color, cyan, softNoise(displacedUV.yx*1.6 + u_time*0.15)*0.35);
 
-                color = mix(color, magenta,
-                    softNoise(displacedUV * 2.1 - u_time * 0.18) * 0.6);
+                // --- Волны ---
+                float waves = sin(length(displacedUV*3.0)*7.0 - u_time*2.0 + bass*6.0);
+                waves += cos(length(displacedUV*3.5)*11.0 + u_time*1.4)*0.6;
+                waves = waves*0.5 + 0.5;
+                color = mix(color, purple, waves*0.6);
 
-                color = mix(color, cyan,
-                    softNoise(displacedUV.yx * 1.6 + u_time * 0.15) * 0.4);
-
-                // псевдо-блюр через цветовое растекание
-                vec3 blurColor = mix(magenta, spectralWhite, 0.55);
-                blurColor = mix(blurColor, cyan, 0.3 + bassReact * 0.6);
-
-                // === Волны с локальной скоростью ===
-                float sector = sin(u_time * 0.15);
-                float localSpeed = mix(1.0, 1.8, sector * 0.5 + 0.5);
-
-                float waves = sin(displacedDist * 7.0 * localSpeed - u_time * 2.1 + bassReact * 7.0);
-                waves += cos(displacedDist * 11.0 * localSpeed + u_time * 1.4) * 0.6;
-                waves = waves * 0.5 + 0.5;
-
-                color = mix(color, magenta, flowMask * (0.6 + bassReact));
-                color = mix(color, purple, waves * 0.6);
-
-                float pulse = 0.85 + 0.25 * sin(u_time * 0.6 + displacedDist * 1.8);
-                pulse += bassReact * 0.6;
+                // --- Бас-слой и пульс ---
+                float pulse = 0.85 + 0.25*sin(u_time*0.6 + length(displacedUV)*1.8);
+                pulse += bass*0.5;
                 color *= pulse;
 
-                // === Дополнительная аудио-реакция (пульс + цветовой сдвиг)
-                float audioPulse = sin(u_time * 2.0 + displacedDist * 6.0) * 0.5 + 0.5;
-                audioPulse *= bassReact * 1.5;
+                float audioPulse = sin(u_time*2.0 + length(displacedUV)*6.0)*0.5 + 0.5;
+                audioPulse *= bass*1.5;
+                vec3 idleLayer = color;
+                vec3 bassLayer = mix(hotpink, cyan, 0.5);
+                float bassAlpha = smoothstep(0.05, 0.6, bass)*0.48;
+                color = mix(idleLayer, idleLayer + bassLayer*0.28, bassAlpha);
+                color += hotpink*audioPulse*0.32;
+                color += cyan*audioPulse*0.24;
 
-                // === Дополнительный бас-слой с сохранением красоты Idle ===
-                vec3 idleLayer = color; // сохраняем текущую органику idle
-                vec3 bassLayer = mix(hotpink, cyan, 0.5); // мягкий слой баса
-                float bassAlpha = smoothstep(0.05, 0.6, bass) * 0.48; // мягкость
-                color = mix(idleLayer, idleLayer + bassLayer * 0.28, bassAlpha);
+                    // --- Мягкая виньетка, но без белого снизу ---
+                float vignette = smoothstep(1.25, 0.0, length(p));
+                color *= mix(0.45,1.2,vignette);
 
-                // === Аудио-пульс поверх для легкого сияния ===
-                color += hotpink * audioPulse * 0.32;
-                color += cyan * audioPulse * 0.24;
+                // --- Мелкий дрейф формы ---
+                float drift2 = sin(u_time*0.25 + p.x*2.0)*cos(u_time*0.18 + p.y*1.7);
+                color *= 1.0 + drift2*0.06;
 
-                // === Финальный воздушный лифт ===
-                color += vec3(0.08, 0.04, 0.08) * (0.6 + bassReact);
-                color = mix(color, color * vec3(1.0, 0.85, 1.1), 1.0 - antiWhiteBass);
-                vec3 bassChroma =
-                    mix(magenta, cyan,
-                        softNoise(displacedUV * 1.2 + u_time * 0.18));
-                bassChroma = mix(bassChroma, purple, 0.5);
-                color += mix(bassChroma, bassBlue, bassReact) * bassReact * 0.38;
-
-                // --- Цветовой баланс в сторону красно‑розового спектра ---
-                vec3 redBias = vec3(1.15, 0.75, 0.9);
+                // --- Цветовой баланс и финальная коррекция ---
+                vec3 redBias = vec3(1.12,0.78,0.9);
                 color *= redBias;
+                float avg = (color.r+color.g+color.b)/3.0;
+                color = mix(vec3(avg), color, 1.2);
+                color = clamp(color,0.0,1.0);
 
-                // Мягкое подавление белого клиппинга
-                float luminance = dot(color, vec3(0.299, 0.587, 0.114));
-                color = mix(color, vec3(luminance), 0.08);
-                float whiteKill = smoothstep(0.72, 0.98, luminance);
-                color = mix(color, spectralWhite, whiteKill * 0.18);
-
-                // Усиление цвета в idle / спокойных местах
-                float idleBoost = smoothstep(0.0, 0.25, u_audio);
-                color = mix(color * 0.95, color * 1.4, idleBoost);
-                float bassColorLift = smoothstep(0.2, 0.9, bass);
-                color = mix(color * 0.9, color * 1.35, bassColorLift * 0.6);
-
-                // Лёгкая сатурация
-                float avg = (color.r + color.g + color.b) / 3.0;
-                color = mix(vec3(avg), color, 1.21);
-
-                // 3. Добавляем медленный дрейф формы (жизнь в idle)
-                float drift = sin(u_time * 0.25 + p.x * 2.0) * cos(u_time * 0.18 + p.y * 1.7);
-                color *= 1.0 + drift * 0.08;
-
-                // --- Медленный пространственный хаос (убирает циклы)
-                float slowChaos =
-                    sin(u_time * 0.04 + p.x * 0.8 + softNoise(p*2.1)) *
-                    cos(u_time * 0.06 + p.y * 0.6 + softNoise(p.yx*1.7));
-                color *= 1.0 + slowChaos * 0.06;
-
-                float blur = 0.0;
-                for(int i = 0; i < BLUR_SAMPLES; i++){
-                    float fi = float(i) / float(BLUR_SAMPLES);
-                    blur += sin(displacedDist * (6.0 + fi*4.0) - u_time * (1.0 + fi));
-                }
-                blur /= float(BLUR_SAMPLES);
-
-                color = mix(color, color + blur * 0.08, 0.65);
-
-                // [5] Псевдо-блюр по экрану (edge fade)
-                float edgeFade = smoothstep(1.42, 0.31, dot(abs(p), vec2(1.0)));
-                color = mix(color, color, edgeFade);
-
-                // [6] Финальное подавление резких структур
-                float structureKill = softNoise(p*6.0 + u_time)*0.08;
-                color = mix(color, vec3((color.r+color.g+color.b)/3.0), structureKill);
-
-                // --- Аудио-реактивный раствор и усиление ---
-                float melt = smoothstep(0.25, 0.9, audio);
-                color = mix(color, blurColor, melt * 0.12);
-                color = mix(color, color * (0.9 + bass * 0.4), 0.6);
-
-                // [5] Добить остаточный фокус (мягкая пространственная деструкция)
-                vec2 antiFocus = vec2(
-                    softNoise(p * 1.8 + u_time * 0.2),
-                    softNoise(p * 2.1 - u_time * 0.25)
-                );
-                color = mix(color, blurColor, length(antiFocus) * 0.18);
-
-                // --- микро-деконцентрация центра (аккуратно, поверх всего)
-                vec2 centerDrift = vec2(
-                    softNoise(p * 1.168 + u_time * 0.068),
-                    softNoise(p * 1.314 - u_time * 0.045)
-                );
-                float deFocus = smoothstep(0.0, 0.55, length(centerDrift));
-                color = mix(color, blurColor, deFocus * 0.06);
-
-                // === Облака перед gl_FragColor ===
-                float cloud =
-                    softNoise(p * 1.168 + u_time * 0.088) *
-                    softNoise(p.yx * 1.314 - u_time * 0.067);
-
-                color = mix(color, blurColor, cloud * 0.25);
-
-                // === EXTRA BEAUTY PASS (аккуратно) ===
-
-                // Мягкая виньетка для глубины
-                float vignette = smoothstep(1.24, 0.42, length(p));
-                color *= mix(0.42, 1.68, vignette);
-
-                // Цветовая дыхательная модуляция от баса
-                float chromaBreath = sin(u_time * 0.8 + displacedDist * 3.0) * 0.42 + 0.67;
-                chromaBreath *= bass * 0.3;
-                color += vec3(0.12, 0.005, 0.42) * chromaBreath;
-
-                // Субтильный hue-drift без HSV (без резких скачков)
-                color.rg += vec2(
-                    softNoise(p * 0.9 + u_time * 0.07),
-                    softNoise(p.yx * 1.1 - u_time * 0.05)
-                ) * 0.035 * (0.4 + bass);
-
-                // Лёгкий glow lift на пиках
-                float glow = smoothstep(0.45, 0.85, bass);
-                color = mix(color, color * 1.1, glow * 0.3);
-
-                color = pow(color, vec3(0.92));
-                color = clamp(color, 0.0, 1.0);
-                color /= (1.0 + bass * 0.66);
-                gl_FragColor = vec4(color * 1.13, 0.96);
+                gl_FragColor = vec4(color*1.08,0.96);
             }
         `;
 

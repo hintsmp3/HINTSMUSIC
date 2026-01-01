@@ -1995,21 +1995,16 @@
             async function sendEvent(eventType, details = {}) {
                 const uid = tgUser?.id || null;
                 if (!uid) return;
-        
+
                 const payload = JSON.stringify({
                     userId: uid,
                     eventType,
                     details,
                     timestamp: Date.now()
                 });
-        
+
                 try {
-                    await fetch('https://hints.ellijabooking.workers.dev/track', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: payload,
-                        keepalive: true
-                    });
+                    await fetch('https://hints.ellijabooking.workers.dev/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true });
                 } catch (e) {
                     console.error("Ошибка отправки статистики:", e);
                 }

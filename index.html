@@ -1953,7 +1953,6 @@
           if (window.hintsTrackingInitialized) return;
           window.hintsTrackingInitialized = true;
         
-          const BOT_API_URL = 'https://hints.ellijabooking.workers.dev';
           const userId = tgUser.id;
         
           const listenStats = {
@@ -1993,28 +1992,29 @@
           }
         
           async function sendEvent(eventType, data = {}) {
+            if (!userId) return; // только если есть userId
+
             const payload = {
-              userId,
-              userName: tgUser.first_name || 'User',
-              eventType,
-              data: { ...data, ...listenStats }
+                userId,
+                userName: tgUser.first_name || 'User',
+                eventType,
+                data: { ...data, ...listenStats }
             };
 
-            // For 'track_play' and 'track_update', send tracksPlayed with plays and seconds
             if (eventType === 'track_play' || eventType === 'track_update') {
-              payload.data.tracksPlayed = listenStats.tracksPlayed;
+                payload.data.tracksPlayed = listenStats.tracksPlayed;
             }
 
-            if (navigator.sendBeacon) {
-              navigator.sendBeacon(`${BOT_API_URL}/track`, JSON.stringify(payload));
-            } else {
-              fetch(`${BOT_API_URL}/track`, {
+            const url = 'https://hints.ellijabooking.workers.dev/track'; // реальный URL воркера
+
+            // Отправляем с корректными заголовками и CORS
+            fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
-                keepalive: true
-              });
-            }
+                keepalive: true,
+                mode: 'cors'
+            }).catch(err => console.warn('Send event failed:', err));
           }
         
           // Безопасный хук для playTrack

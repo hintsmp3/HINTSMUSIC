@@ -1423,9 +1423,9 @@
                         softNoise(displacedUV + blurStep.yx*1.0)
                     ) * 0.6;
 
-                color = mix(color, blur, 0.35);
+                color = mix(color, blur, 0.55);
 
-                gl_FragColor = vec4(color*1.08,0.96);
+                gl_FragColor = vec4(color*1.04,0.88);
             }
         `;
 
@@ -1654,7 +1654,7 @@
 
         // === PARTICLES (POOLED) ===
         const particles = [];
-        const MAX_PARTICLES = 50;
+        const MAX_PARTICLES = 24;
         const particlesContainer = document.getElementById('particles');
 
         function createParticle() {
@@ -1683,7 +1683,7 @@
             if (isPlaying) {
                 createParticle();
             }
-        }, 200);
+        }, 420);
 
         // === IMMERSIVE / IDLE MODE LISTENERS ===
         ['mousemove', 'mousedown', 'touchstart', 'keydown'].forEach(evt => {

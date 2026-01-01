@@ -1383,8 +1383,13 @@
                 float bassPulse = sin(u_time*3.0 + length(displacedUV)*8.0)*0.5 + 0.5;
                 bassPulse *= pow(bass, 1.6); // усиление реакции на сильный бас
 
-                // Мягкий хвост за басом
-                float trail = smoothstep(0.0, 1.0, bassPulse) * 0.5;
+                // Мягкий trail с инерцией
+                float trail = smoothstep(0.15, 1.0, bassPulse);
+                trail *= 0.35 + bass * 0.45;
+
+                // Trail displacement (след в стекле)
+                vec2 trailDir = normalize(displacedUV + 0.0001);
+                displacedUV += trailDir * trail * 0.08;
 
                 // Цветовой акцент на бас
                 vec3 bassAccent = mix(bassBlue, cyan, trail);
@@ -1423,7 +1428,8 @@
                         softNoise(displacedUV + blurStep.yx*1.0)
                     ) * 0.6;
 
-                color = mix(color, blur, 0.55);
+                // Trail усиливает размытие
+                color = mix(color, blur, 0.55 + trail * 0.25);
 
                 gl_FragColor = vec4(color*1.04,0.88);
             }

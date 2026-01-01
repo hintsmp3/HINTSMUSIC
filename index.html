@@ -434,43 +434,44 @@
         }
 
         .releases {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(233px, 1fr));
-            gap: 60px;
-            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+            max-width: 920px;
             margin: 0 auto 120px;
-            padding: 20px;
+            padding: 0 32px;
             position: relative;
             z-index: 3;
         }
 
         .release {
             cursor: pointer;
-            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             position: relative;
+            display: grid;
+            grid-template-columns: 72px 1fr;
+            align-items: center;
+            gap: 22px;
+            overflow: hidden;
+            transition: transform 0.3s ease;
         }
 
 
         .release:hover {
-            transform: scale(1.05) translateY(-5px);
+            transform: translateX(4px);
         }
 
         .release img {
-            width: 100%;
-            aspect-ratio: 1/1;
+            width: 88px;
+            height: 88px;
             object-fit: cover;
             border-radius: 50%;
-            transition: all 0.4s ease;
-            box-shadow: 0 9px 27px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, filter 0.3s ease;
+            will-change: transform;
         }
 
         .release:hover img {
-            transform: scale(1.08);
-            filter: brightness(1.3) saturate(1.2);
-            box-shadow:
-                0 0 30px rgba(255, 105, 255, 0.6),
-                0 0 60px rgba(255, 105, 255, 0.4),
-                0 15px 40px rgba(0, 0, 0, 0.5);
+            transform: scale(1.02);
+            filter: brightness(1.1);
         }
 
         /* === VINYL HOLE EFFECT === */
@@ -480,6 +481,9 @@
             overflow: hidden;
             -webkit-mask-image: radial-gradient(circle, transparent 0 14%, black 15%);
             mask-image: radial-gradient(circle, transparent 0 14%, black 15%);
+            flex-shrink: 0;
+            width: 88px;
+            height: 88px;
         }
 
         .vinyl img {
@@ -563,17 +567,49 @@
 
 
         .release p {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             font-family: 'Bebas Neue', 'Impact', sans-serif;
-            margin: 30px 0 0;
-            font-size: 0.88em;
-            text-shadow: 0 3px 12px #000;
-            transition: all 0.4s ease;
-            letter-spacing: 1.5px;
+            margin: 0;
+            font-size: 1.05em;
+            letter-spacing: 1.8px;
+            white-space: nowrap;
+            overflow: hidden;
+            opacity: 0.85;
+            transition: opacity 0.25s ease;
+            justify-content: flex-start;
+        }
+
+        .track-name {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: left;
+            padding-left: 6px;
+        }
+
+        .track-plays {
+            margin-left: auto;
+            margin-right: 7px;
+            text-align: right;
+            flex-shrink: 0;
         }
 
         .release:hover p {
-            transform: scale(1.05);
-            text-shadow: 0 0 15px #ff69ff;
+            opacity: 1;
+            transform: translateX(4px);
+        }
+
+        .track-plays {
+            flex-shrink: 0;
+            font-size: 0.8em;
+            opacity: 0.55;
+            letter-spacing: 1px;
+        }
+        .release:hover .track-plays {
+            opacity: 0.85;
         }
 
         .custom-player {
@@ -728,6 +764,11 @@
             opacity: 0.9;
             margin: 5px 0 0;
             letter-spacing: 1px;
+        }
+
+        .track-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .controls {
@@ -895,6 +936,18 @@
                 font-size: 0.95em;
                 min-width: 11px;
             }
+
+            .release p {
+                font-size: 0.85em;
+            }
+
+            .track-name {
+                max-width: 100%;
+            }
+
+            .releases {
+                padding: 0 20px;
+            }
         }
     </style>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -960,28 +1013,40 @@
                 <div class="vinyl">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7852.jpeg" alt="Nazareth" loading="lazy">
                 </div>
-                <p>Slut Online, lindtayl0r - Nazareth</p>
+                <p>
+                  <span class="track-name">Slut Online, lindtayl0r - Nazareth</span>
+                  <span class="track-plays" data-track="Nazareth">0</span>
+                </p>
             </div>
 
             <div class="release" data-title="Sex & Limbo" onclick="playTrack('track2.mp3', 'Sex & Limbo', 'Slut Online, lindtayl0r', 'IMG_7855.jpeg')">
                 <div class="vinyl">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7855.jpeg" alt="Sex & Limbo" loading="lazy">
                 </div>
-                <p>Slut Online, lindtayl0r - Sex & Limbo</p>
+                <p>
+                  <span class="track-name">Slut Online, lindtayl0r - Sex & Limbo</span>
+                  <span class="track-plays" data-track="Sex & Limbo">0</span>
+                </p>
             </div>
 
             <div class="release" data-title="SPACEDUST" onclick="playTrack('track3.mp3', 'SPACEDUST', 'Unknown', 'IMG_7856.jpeg')">
                 <div class="vinyl">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7856.jpeg" alt="SPACEDUST" loading="lazy">
                 </div>
-                <p>SPACEDUST</p>
+                <p>
+                  <span class="track-name">SPACEDUST</span>
+                  <span class="track-plays" data-track="SPACEDUST">0</span>
+                </p>
             </div>
 
             <div class="release" data-title="Interstellar" onclick="playTrack('track4.mp3', 'Interstellar', 'XSDC', 'IMG_7857.jpeg')">
                 <div class="vinyl">
                     <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ff69ff' width='400' height='400'/%3E%3C/svg%3E" data-src="IMG_7857.jpeg" alt="Interstellar" loading="lazy">
                 </div>
-                <p>XSDC - Interstellar</p>
+                <p>
+                  <span class="track-name">XSDC - Interstellar</span>
+                  <span class="track-plays" data-track="Interstellar">0</span>
+                </p>
             </div>
         </div>
 
@@ -1888,49 +1953,132 @@
           if (window.hintsTrackingInitialized) return;
           window.hintsTrackingInitialized = true;
         
-          const BOT_API_URL = 'https://hints.ellijabooking.workers.dev';
           const userId = tgUser.id;
         
           const listenStats = {
             totalPlays: 0,
-            tracksPlayed: {},
-            sessionStart: Date.now()
+            tracksPlayed: {}, // { "Nazareth": { plays: 0, seconds: 0 } }
+            sessionStart: Date.now(),
+            currentTrackStart: null,
+            currentTrackTitle: null
           };
+          // Восстановление totalPlays из localStorage
+          const savedTotal = Number(localStorage.getItem('totalPlays') || 0);
+          listenStats.totalPlays = savedTotal;
+
+          // Load saved plays from localStorage
+          const savedPlays = JSON.parse(localStorage.getItem('trackPlays') || '{}');
+          listenStats.tracksPlayed = savedPlays;
+
+          // Update UI with saved plays
+          document.querySelectorAll('.track-plays').forEach(el => {
+            const key = el.dataset.track;
+            let count = 0;
+            if (savedPlays[key]) {
+              if (typeof savedPlays[key] === "object") {
+                count = savedPlays[key].plays || 0;
+              } else {
+                // migrate old format
+                count = savedPlays[key];
+                savedPlays[key] = { plays: count, seconds: 0 };
+              }
+            }
+            el.textContent = count;
+          });
+
+          function updatePlaysUI(track, count) {
+            const el = document.querySelector(`.track-plays[data-track="${CSS.escape(track)}"]`);
+            if (el) el.textContent = count;
+          }
         
           async function sendEvent(eventType, data = {}) {
+            if (!userId) return; // только если есть userId
+
             const payload = {
-              userId,
-              userName: tgUser.first_name || 'User',
-              eventType,
-              data: { ...data, ...listenStats }
+                userId,
+                userName: tgUser.first_name || 'User',
+                eventType,
+                data: { ...data, ...listenStats }
             };
-        
-            if (navigator.sendBeacon) {
-              navigator.sendBeacon(`${BOT_API_URL}/track`, JSON.stringify(payload));
-            } else {
-              fetch(`${BOT_API_URL}/track`, {
+
+            if (eventType === 'track_play' || eventType === 'track_update') {
+                payload.data.tracksPlayed = listenStats.tracksPlayed;
+            }
+
+            const url = 'https://hints.ellijabooking.workers.dev/track'; // реальный URL воркера
+
+            // Отправляем с корректными заголовками и CORS
+            fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
-                keepalive: true
-              });
-            }
+                keepalive: true,
+                mode: 'cors'
+            }).catch(err => console.warn('Send event failed:', err));
           }
         
-          // Переопределяем playTrack
-          const originalPlayTrack = window.playTrack;
-          window.playTrack = function(src, title, artist, cover) {
-            originalPlayTrack(src, title, artist, cover);
-        
-            listenStats.totalPlays++;
-            if (!listenStats.tracksPlayed[title]) listenStats.tracksPlayed[title] = 0;
-            listenStats.tracksPlayed[title]++;
-        
-            const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
-            Object.assign(listenStats, { sessionTime });
-        
-            sendEvent('track_play', { track: title, artist });
-          };
+          // Безопасный хук для playTrack
+          function hookPlayTrack() {
+            if (typeof window.playTrack !== 'function') {
+              requestAnimationFrame(hookPlayTrack);
+              return;
+            }
+
+            const originalPlayTrack = window.playTrack;
+
+            // Таймер для обновления секунд прослушивания
+            let trackTimer = null;
+
+            window.playTrack = function(src, title, artist, cover) {
+              // Если играет предыдущий трек — добавить время к нему
+              if (listenStats.currentTrackTitle) {
+                const prevTrack = listenStats.currentTrackTitle;
+                const now = Date.now();
+                const elapsed = Math.floor((now - listenStats.currentTrackStart) / 1000);
+                if (!listenStats.tracksPlayed[prevTrack]) listenStats.tracksPlayed[prevTrack] = { plays: 0, seconds: 0 };
+                listenStats.tracksPlayed[prevTrack].seconds += elapsed;
+                // Сохраняем прогресс
+                localStorage.setItem('trackPlays', JSON.stringify(listenStats.tracksPlayed));
+              }
+
+              // Установить новый трек и старт времени
+              listenStats.currentTrackTitle = title;
+              listenStats.currentTrackStart = Date.now();
+
+              // Увеличить plays и инициализировать seconds
+              if (!listenStats.tracksPlayed[title]) listenStats.tracksPlayed[title] = { plays: 0, seconds: 0 };
+              listenStats.tracksPlayed[title].plays++;
+              localStorage.setItem('trackPlays', JSON.stringify(listenStats.tracksPlayed));
+              updatePlaysUI(title, listenStats.tracksPlayed[title].plays);
+
+              // Увеличить totalPlays
+              listenStats.totalPlays++;
+              localStorage.setItem('totalPlays', listenStats.totalPlays);
+
+              // Сессия
+              const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
+              listenStats.sessionTime = sessionTime;
+
+              // Вызвать оригинальный трек
+              originalPlayTrack(src, title, artist, cover);
+
+              sendEvent('track_play', { track: title, artist });
+
+              // Сбросить и запустить новый таймер для секунд
+              if (trackTimer) clearInterval(trackTimer);
+              trackTimer = setInterval(() => {
+                // Добавить 5 секунд к текущему треку
+                const currTitle = listenStats.currentTrackTitle;
+                if (currTitle && listenStats.tracksPlayed[currTitle]) {
+                  listenStats.tracksPlayed[currTitle].seconds += 5;
+                  localStorage.setItem('trackPlays', JSON.stringify(listenStats.tracksPlayed));
+                  sendEvent('track_update', { track: currTitle });
+                }
+              }, 5000);
+            };
+          }
+
+          hookPlayTrack();
         
           // Периодические обновления + конец сессии
           setInterval(() => {

@@ -1958,20 +1958,38 @@
         
           const listenStats = {
             totalPlays: 0,
-            tracksPlayed: {},
-            sessionStart: Date.now()
+            tracksPlayed: {}, // { "Nazareth": { plays: 0, seconds: 0 } }
+            sessionStart: Date.now(),
+            currentTrackStart: null,
+            currentTrackTitle: null
           };
+          // Восстановление totalPlays из localStorage
+          const savedTotal = Number(localStorage.getItem('totalPlays') || 0);
+          listenStats.totalPlays = savedTotal;
 
           // Load saved plays from localStorage
           const savedPlays = JSON.parse(localStorage.getItem('trackPlays') || '{}');
           listenStats.tracksPlayed = savedPlays;
-          Object.entries(savedPlays).forEach(([track, count]) => {
-              updatePlaysUI(track, count);
+
+          // Update UI with saved plays
+          document.querySelectorAll('.track-plays').forEach(el => {
+            const key = el.dataset.track;
+            let count = 0;
+            if (savedPlays[key]) {
+              if (typeof savedPlays[key] === "object") {
+                count = savedPlays[key].plays || 0;
+              } else {
+                // migrate old format
+                count = savedPlays[key];
+                savedPlays[key] = { plays: count, seconds: 0 };
+              }
+            }
+            el.textContent = count;
           });
 
           function updatePlaysUI(track, count) {
-              const el = document.querySelector(`.track-plays[data-track="${track}"]`);
-              if (el) el.textContent = count;
+            const el = document.querySelector(`.track-plays[data-track="${CSS.escape(track)}"]`);
+            if (el) el.textContent = count;
           }
         
           async function sendEvent(eventType, data = {}) {
@@ -1981,7 +1999,12 @@
               eventType,
               data: { ...data, ...listenStats }
             };
-        
+
+            // For 'track_play' and 'track_update', send tracksPlayed with plays and seconds
+            if (eventType === 'track_play' || eventType === 'track_update') {
+              payload.data.tracksPlayed = listenStats.tracksPlayed;
+            }
+
             if (navigator.sendBeacon) {
               navigator.sendBeacon(`${BOT_API_URL}/track`, JSON.stringify(payload));
             } else {
@@ -1994,23 +2017,68 @@
             }
           }
         
-          // Переопределяем playTrack
-          const originalPlayTrack = window.playTrack;
-          window.playTrack = function(src, title, artist, cover) {
-            originalPlayTrack(src, title, artist, cover);
+          // Безопасный хук для playTrack
+          function hookPlayTrack() {
+            if (typeof window.playTrack !== 'function') {
+              requestAnimationFrame(hookPlayTrack);
+              return;
+            }
 
-            listenStats.totalPlays++;
-            if (!listenStats.tracksPlayed[title]) listenStats.tracksPlayed[title] = 0;
-            listenStats.tracksPlayed[title]++;
-            // Save to localStorage after increment
-            localStorage.setItem('trackPlays', JSON.stringify(listenStats.tracksPlayed));
-            updatePlaysUI(title, listenStats.tracksPlayed[title]);
+            const originalPlayTrack = window.playTrack;
 
-            const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
-            Object.assign(listenStats, { sessionTime });
+            // Таймер для обновления секунд прослушивания
+            let trackTimer = null;
 
-            sendEvent('track_play', { track: title, artist });
-          };
+            window.playTrack = function(src, title, artist, cover) {
+              // Если играет предыдущий трек — добавить время к нему
+              if (listenStats.currentTrackTitle) {
+                const prevTrack = listenStats.currentTrackTitle;
+                const now = Date.now();
+                const elapsed = Math.floor((now - listenStats.currentTrackStart) / 1000);
+                if (!listenStats.tracksPlayed[prevTrack]) listenStats.tracksPlayed[prevTrack] = { plays: 0, seconds: 0 };
+                listenStats.tracksPlayed[prevTrack].seconds += elapsed;
+                // Сохраняем прогресс
+                localStorage.setItem('trackPlays', JSON.stringify(listenStats.tracksPlayed));
+              }
+
+              // Установить новый трек и старт времени
+              listenStats.currentTrackTitle = title;
+              listenStats.currentTrackStart = Date.now();
+
+              // Увеличить plays и инициализировать seconds
+              if (!listenStats.tracksPlayed[title]) listenStats.tracksPlayed[title] = { plays: 0, seconds: 0 };
+              listenStats.tracksPlayed[title].plays++;
+              localStorage.setItem('trackPlays', JSON.stringify(listenStats.tracksPlayed));
+              updatePlaysUI(title, listenStats.tracksPlayed[title].plays);
+
+              // Увеличить totalPlays
+              listenStats.totalPlays++;
+              localStorage.setItem('totalPlays', listenStats.totalPlays);
+
+              // Сессия
+              const sessionTime = Math.floor((Date.now() - listenStats.sessionStart) / 1000);
+              listenStats.sessionTime = sessionTime;
+
+              // Вызвать оригинальный трек
+              originalPlayTrack(src, title, artist, cover);
+
+              sendEvent('track_play', { track: title, artist });
+
+              // Сбросить и запустить новый таймер для секунд
+              if (trackTimer) clearInterval(trackTimer);
+              trackTimer = setInterval(() => {
+                // Добавить 5 секунд к текущему треку
+                const currTitle = listenStats.currentTrackTitle;
+                if (currTitle && listenStats.tracksPlayed[currTitle]) {
+                  listenStats.tracksPlayed[currTitle].seconds += 5;
+                  localStorage.setItem('trackPlays', JSON.stringify(listenStats.tracksPlayed));
+                  sendEvent('track_update', { track: currTitle });
+                }
+              }, 5000);
+            };
+          }
+
+          hookPlayTrack();
         
           // Периодические обновления + конец сессии
           setInterval(() => {

@@ -1611,32 +1611,54 @@
     (function() {
         const effectCanvas = document.getElementById('playerEffect');
         if (!effectCanvas) return;
-        const effectCtx = effectCanvas.getContext('2d');
+        const ctx = effectCanvas.getContext('2d');
         const customPlayer = document.getElementById('customPlayer');
-        function resizeEffect() {
-            if (!customPlayer) return;
+
+        function resize() {
             effectCanvas.width = customPlayer.offsetWidth;
             effectCanvas.height = customPlayer.offsetHeight;
         }
-        resizeEffect();
-        window.addEventListener('resize', resizeEffect);
+        resize();
+        window.addEventListener('resize', resize);
 
-        function renderEffect() {
-            effectCtx.clearRect(0, 0, effectCanvas.width, effectCanvas.height);
-            // простой пульсирующий эффект по аудио
+        function noise(x, y) {
+            return (Math.sin(x*12.9898 + y*78.233) * 43758.5453) % 1;
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, effectCanvas.width, effectCanvas.height);
+
             analyser.getByteFrequencyData(dataArray);
             const audioLevel = (dataArray.reduce((a,b)=>a+b,0)/bufferLength)/255;
-            const gradient = effectCtx.createRadialGradient(
-                effectCanvas.width/2, effectCanvas.height/2, 0,
-                effectCanvas.width/2, effectCanvas.height/2, effectCanvas.width/2
-            );
-            gradient.addColorStop(0, `rgba(255,105,255,${0.08 + audioLevel * 0.35})`);
-            gradient.addColorStop(1, 'rgba(0,0,0,0)');
-            effectCtx.fillStyle = gradient;
-            effectCtx.fillRect(0,0,effectCanvas.width,effectCanvas.height);
-            requestAnimationFrame(renderEffect);
+
+            const w = effectCanvas.width;
+            const h = effectCanvas.height;
+
+            // базовый градиент стекла
+            const gradient = ctx.createLinearGradient(0,0,w,h);
+            gradient.addColorStop(0, `rgba(255,105,255,${0.04 + audioLevel*0.2})`);
+            gradient.addColorStop(1, `rgba(120,180,255,${0.03 + audioLevel*0.15})`);
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0,0,w,h);
+
+            // мягкий шум поверх
+            const imageData = ctx.getImageData(0,0,w,h);
+            const data = imageData.data;
+            for (let i=0; i<data.length; i+=4) {
+                const nx = (i/4)%w;
+                const ny = Math.floor((i/4)/w);
+                const n = noise(nx*0.1 + performance.now()*0.001, ny*0.1);
+                data[i] += n*30*audioLevel;     // R
+                data[i+1] += n*20*audioLevel;   // G
+                data[i+2] += n*25*audioLevel;   // B
+                // Alpha остаётся из gradient
+            }
+            ctx.putImageData(imageData,0,0);
+
+            requestAnimationFrame(render);
         }
-        renderEffect();
+        render();
     })();
     </script>
 

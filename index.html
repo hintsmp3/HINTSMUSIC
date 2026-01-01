@@ -439,7 +439,7 @@
             gap: 28px;
             max-width: 920px;
             margin: 0 auto 120px;
-            padding: 0 24px;
+            padding: 0 32px;
             position: relative;
             z-index: 3;
         }
@@ -448,9 +448,9 @@
             cursor: pointer;
             position: relative;
             display: grid;
-            grid-template-columns: 88px 1fr;
+            grid-template-columns: 72px 1fr;
             align-items: center;
-            gap: 24px;
+            gap: 16px;
             overflow: hidden;
             transition: transform 0.3s ease;
         }
@@ -578,6 +578,7 @@
             overflow: hidden;
             opacity: 0.85;
             transition: opacity 0.25s ease;
+            justify-content: flex-start;
         }
 
         .track-name {
@@ -585,6 +586,7 @@
             min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
+            text-align: left;
         }
 
         .track-plays {
@@ -939,6 +941,10 @@
 
             .track-name {
                 max-width: 100%;
+            }
+
+            .releases {
+                padding: 0 20px;
             }
         }
     </style>

@@ -494,35 +494,6 @@
                 0 0 80px rgba(255, 105, 255, 0.4);
         }
 
-        .vinyl::after {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: -10px;
-            right: -10px;
-            bottom: -10px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 105, 255, 0);
-            box-shadow: 0 0 20px rgba(255, 105, 255, 0);
-            transition: all 0.4s ease;
-            pointer-events: none;
-            z-index: 3;
-        }
-
-        .vinyl.playing::after {
-            border: 2px solid rgba(255, 105, 255, 0.9);
-            box-shadow:
-                0 0 60px rgba(255, 105, 255, 0.9),
-                inset 0 0 30px rgba(255, 105, 255, 0.4);
-        }
-
-        .release:hover .vinyl::after {
-            border: 2px solid rgba(255, 105, 255, 0.8);
-            box-shadow:
-                0 0 40px rgba(255, 105, 255, 0.8),
-                inset 0 0 20px rgba(255, 105, 255, 0.3);
-        }
-
         .vinyl::before {
             content: '';
             position: absolute;
@@ -535,7 +506,7 @@
             pointer-events: none;
             z-index: 1;
 
-            /* микро-текстура винила вокруг отверстия */
+            /* микро-текстура внутри отверстия */
             background:
                 repeating-radial-gradient(
                     circle,
@@ -545,7 +516,6 @@
                     rgba(0,0,0,0.15) 3px
                 );
 
-            /* аккуратная световая кромка + глубина */
             box-shadow:
                 inset 0 0 0 1px rgba(255,255,255,0.45),
                 inset 0 0 8px rgba(0,0,0,0.6),
@@ -555,18 +525,26 @@
         .vinyl::after {
             content: '';
             position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 12%;
-            height: 12%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             border-radius: 50%;
-            box-shadow:
-                inset 0 0 0 1px rgba(255,255,255,0.35),
-                inset 0 0 8px rgba(0,0,0,0.4),
-                0 0 6px rgba(0,0,0,0.4);
-            transform: translate(-50%, -50%);
             pointer-events: none;
             z-index: 2;
+
+            /* тонкая внешняя текстура (виниловый рельеф) */
+            background:
+                repeating-radial-gradient(
+                    circle,
+                    rgba(255,255,255,0.03) 0px,
+                    rgba(255,255,255,0.03) 1px,
+                    rgba(0,0,0,0.02) 2px,
+                    rgba(0,0,0,0.02) 3px
+                );
+            transform: rotate(0deg);
+        }
+
+        .vinyl.playing::after {
+            animation: rotate 20s linear infinite;
         }
 
 

@@ -1198,11 +1198,27 @@
 
         function resizeCanvas() {
             const dpr = window.devicePixelRatio || 1;
-            canvas.width = window.innerWidth * 1.3 * dpr;   // растягиваем с запасом
-            canvas.height = window.innerHeight * 1.3 * dpr;
-            canvas.style.width = '120vw';
-            canvas.style.height = '120vh';
-            canvas.style.transform = 'translate(-5%, -5%)'; // смещаем, чтобы скрыть края
+            const ww = window.innerWidth;
+            const wh = window.innerHeight;
+
+            canvas.width = ww * dpr;
+            canvas.height = wh * dpr;
+
+            // Подгоняем размер под широкие экраны
+            let scaleX = 1.3;
+            let scaleY = 1.3;
+
+            if (ww / wh > 1.6) { // широкие мониторы
+                scaleX = 1.6;
+                scaleY = 1.3;
+            }
+
+            canvas.style.width = `${scaleX * 100}vw`;
+            canvas.style.height = `${scaleY * 100}vh`;
+
+            // Смещаем только немного, чтобы центр был примерно в середине
+            canvas.style.transform = `translate(-${(scaleX-1)*50}%, -${(scaleY-1)*50}%)`;
+
             gl.viewport(0, 0, canvas.width, canvas.height);
         }
         resizeCanvas();
@@ -1427,11 +1443,24 @@
 
         function resizeGrain() {
             const dpr = window.devicePixelRatio || 1;
-            grainCanvas.width = window.innerWidth * 1.3 * dpr;
-            grainCanvas.height = window.innerHeight * 1.3 * dpr;
-            grainCanvas.style.width = '120vw';
-            grainCanvas.style.height = '120vh';
-            grainCanvas.style.transform = 'translate(-5%, -5%)';
+            const ww = window.innerWidth;
+            const wh = window.innerHeight;
+
+            grainCanvas.width = ww * dpr;
+            grainCanvas.height = wh * dpr;
+
+            let scaleX = 1.3;
+            let scaleY = 1.3;
+
+            if (ww / wh > 1.6) {
+                scaleX = 1.6;
+                scaleY = 1.3;
+            }
+
+            grainCanvas.style.width = `${scaleX * 100}vw`;
+            grainCanvas.style.height = `${scaleY * 100}vh`;
+            grainCanvas.style.transform = `translate(-${(scaleX-1)*50}%, -${(scaleY-1)*50}%)`;
+
             ggl.viewport(0, 0, grainCanvas.width, grainCanvas.height);
         }
         resizeGrain();

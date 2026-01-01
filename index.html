@@ -1617,153 +1617,81 @@
     (function() {
         const effectCanvas = document.getElementById('playerEffect');
         if (!effectCanvas) return;
-        const gl = effectCanvas.getContext('webgl', { preserveDrawingBuffer: false, antialias: true });
+        const ctx = effectCanvas.getContext('2d');
         const customPlayer = document.getElementById('customPlayer');
 
-        // Vertex shader
-        const vsSource = `
-            attribute vec2 a_position;
-            void main() {
-                gl_Position = vec4(a_position, 0.0, 1.0);
-            }
-        `;
-
-        // Fragment shader
-        const fsSource = `
-            precision mediump float;
-            uniform float u_time;
-            uniform vec2 u_resolution;
-            uniform float u_audio;
-
-            float hash(vec2 p) {
-                p = fract(p * vec2(123.34, 456.21));
-                p += dot(p,p+45.32);
-                return fract(p.x*p.y);
-            }
-            float softNoise(vec2 p){
-                vec2 i = floor(p);
-                vec2 f = fract(p);
-                f = f*f*(3.0-2.0*f);
-                float a = hash(i);
-                float b = hash(i+vec2(1.0,0.0));
-                float c = hash(i+vec2(0.0,1.0));
-                float d = hash(i+vec2(1.0,1.0));
-                return mix(mix(a,b,f.x), mix(c,d,f.x), f.y)*0.9;
-            }
-
-            void main() {
-                vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-                vec2 p = uv*2.0 - 1.0;
-                p.x *= u_resolution.x/u_resolution.y;
-
-                float r = length(p);
-                float strength = 0.65;
-                vec2 lensUV = p * (1.0 - strength * r*r);
-                p = mix(p, lensUV, 0.7);
-
-                float audio = smoothstep(0.03, 0.6, u_audio);
-                float bass = pow(audio, 1.12);
-
-                // Glass gradient
-                vec3 c1 = vec3(1.0, 0.41, 1.0);
-                vec3 c2 = vec3(0.47,0.7,1.0);
-                float grad = mix(uv.x, uv.y, 0.5);
-                vec3 color = mix(c1, c2, grad*0.8 + 0.1 + bass*0.35);
-                color += softNoise(uv*6.0 + u_time*0.4)*0.14;
-                color += bass*0.04;
-
-                // Subtle audio-reactive shimmer
-                float shimmer = sin(u_time*2.0 + r*8.0 + bass*8.0)*0.5 + 0.5;
-                color = mix(color, vec3(1.0,0.95,1.0), shimmer*0.14*bass);
-
-                // Soft vignette
-                float vignette = smoothstep(1.18, 0.0, length(p));
-                color *= mix(0.8,1.18,vignette);
-
-                // Soft noise overlay
-                float n = softNoise(uv*9.0 + u_time*0.6);
-                color += n*0.08*bass;
-
-                gl_FragColor = vec4(color, 0.85 + 0.1*bass);
-            }
-        `;
-
-        function createShader(gl, type, source) {
-            const shader = gl.createShader(type);
-            gl.shaderSource(shader, source);
-            gl.compileShader(shader);
-            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                console.error(gl.getShaderInfoLog(shader));
-                gl.deleteShader(shader);
-                return null;
-            }
-            return shader;
-        }
-
-        function createProgram(gl, vsSource, fsSource) {
-            const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
-            const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
-            const program = gl.createProgram();
-            gl.attachShader(program, vs);
-            gl.attachShader(program, fs);
-            gl.linkProgram(program);
-            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-                console.error(gl.getProgramInfoLog(program));
-            }
-            return program;
-        }
-
-        const program = createProgram(gl, vsSource, fsSource);
-        const posLoc = gl.getAttribLocation(program, 'a_position');
-        const timeLoc = gl.getUniformLocation(program, 'u_time');
-        const resLoc = gl.getUniformLocation(program, 'u_resolution');
-        const audioLoc = gl.getUniformLocation(program, 'u_audio');
-
-        const posBuf = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
-        gl.bufferData(
-            gl.ARRAY_BUFFER,
-            new Float32Array([-1,-1, 1,-1, -1,1, 1,1]),
-            gl.STATIC_DRAW
-        );
-
-        // Resize logic
         function resize() {
-            const dpr = window.devicePixelRatio || 1;
-            effectCanvas.width = customPlayer.offsetWidth * dpr;
-            effectCanvas.height = customPlayer.offsetHeight * dpr;
-            effectCanvas.style.width = customPlayer.offsetWidth + 'px';
-            effectCanvas.style.height = customPlayer.offsetHeight + 'px';
-            gl.viewport(0, 0, effectCanvas.width, effectCanvas.height);
+            effectCanvas.width = customPlayer.offsetWidth;
+            effectCanvas.height = customPlayer.offsetHeight;
         }
         resize();
         window.addEventListener('resize', resize);
 
-        // Audio analysis smoothing
-        let smoothAudio = 0.01;
-        let smoothAudioLast = 0.01;
-        let lastTime = Date.now();
+        function noise(x, y) {
+            return (Math.sin(x*12.9898 + y*78.233) * 43758.5453) % 1;
+        }
 
         function render() {
+            ctx.clearRect(0, 0, effectCanvas.width, effectCanvas.height);
+
             analyser.getByteFrequencyData(dataArray);
             const rawAudio = (dataArray.reduce((a,b)=>a+b,0)/bufferLength)/255;
-            const rise = 0.12, fall = 0.04;
-            let delta = rawAudio - smoothAudio;
-            smoothAudio += delta * (delta > 0 ? rise : fall);
-            let deltaLast = smoothAudio - smoothAudioLast;
-            smoothAudioLast += deltaLast * (deltaLast > 0 ? rise : fall);
 
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            gl.useProgram(program);
-            gl.enableVertexAttribArray(posLoc);
-            gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
-            gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+            // Плавное сглаживание (двухступенчатое)
+            const rise = 0.12;  // скорость увеличения
+            const fall = 0.04;  // скорость уменьшения
+            if (typeof render.smoothAudio === 'undefined') render.smoothAudio = 0.01;
+            if (typeof render.smoothAudioLast === 'undefined') render.smoothAudioLast = 0.01;
 
-            gl.uniform1f(timeLoc, (Date.now() - lastTime) / 1000.0);
-            gl.uniform2f(resLoc, effectCanvas.width, effectCanvas.height);
-            gl.uniform1f(audioLoc, smoothAudioLast);
+            let delta = rawAudio - render.smoothAudio;
+            render.smoothAudio += delta * (delta > 0 ? rise : fall);
+            let deltaLast = render.smoothAudio - render.smoothAudioLast;
+            render.smoothAudioLast += deltaLast * (deltaLast > 0 ? rise : fall);
 
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            const audioLevel = render.smoothAudioLast;
+
+            const w = effectCanvas.width;
+            const h = effectCanvas.height;
+
+            // базовый градиент стекла
+            const gradient = ctx.createLinearGradient(0,0,w,h);
+            gradient.addColorStop(0, `rgba(255,105,255,${0.04 + audioLevel*0.2})`);
+            gradient.addColorStop(1, `rgba(120,180,255,${0.03 + audioLevel*0.15})`);
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0,0,w,h);
+
+            // мягкий шум поверх
+            const imageData = ctx.getImageData(0,0,w,h);
+            const data = imageData.data;
+            for (let i=0; i<data.length; i+=4) {
+                const nx = (i/4)%w;
+                const ny = Math.floor((i/4)/w);
+                const n = noise(nx*0.1 + performance.now()*0.001, ny*0.1);
+                data[i] += n*30*audioLevel;     // R
+                data[i+1] += n*20*audioLevel;   // G
+                data[i+2] += n*25*audioLevel;   // B
+                // Alpha остаётся из gradient
+            }
+
+            // --- Lens distortion (стеклянная линза) ---
+            // После применения шума, до putImageData.
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    const dx = (x / w - 0.5) * 2.0;
+                    const dy = (y / h - 0.5) * 2.0;
+                    const r = Math.sqrt(dx*dx + dy*dy);
+                    const strength = 0.65; // усиленная сила линзы
+                    const factor = 1.0 - strength * r*r;
+                    const idx = (y*w + x)*4;
+                    data[idx + 0] = data[idx + 0] * factor;
+                    data[idx + 1] = data[idx + 1] * factor;
+                    data[idx + 2] = data[idx + 2] * factor;
+                    // alpha не трогаем
+                }
+            }
+
+            ctx.putImageData(imageData,0,0);
 
             requestAnimationFrame(render);
         }

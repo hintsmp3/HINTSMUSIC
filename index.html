@@ -567,6 +567,7 @@
 
 
         .release p {
+            position: relative;
             display: flex;
             align-items: baseline;
             gap: 10px;
@@ -576,9 +577,25 @@
             letter-spacing: 1.8px;
             white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis;
             opacity: 0.85;
-            transition: opacity 0.25s ease;
+        }
+
+        .release .track-name {
+            display: inline-block;
+            min-width: 100%;
+            white-space: nowrap;
+            will-change: transform;
+        }
+
+        .release.is-overflow .track-name {
+            animation: track-marquee 8s linear infinite;
+        }
+
+        @keyframes track-marquee {
+            0%   { transform: translateX(0); }
+            10%  { transform: translateX(0); }
+            90%  { transform: translateX(-100%); }
+            100% { transform: translateX(-100%); }
         }
 
         .release:hover p {
@@ -1764,6 +1781,22 @@
             }
         });
 
+    </script>
+
+    <script>
+    function updateOverflowTitles() {
+        document.querySelectorAll('.release').forEach(release => {
+            const name = release.querySelector('.track-name');
+            if (!name) return;
+            release.classList.toggle(
+                'is-overflow',
+                name.scrollWidth > name.clientWidth
+            );
+        });
+    }
+
+    window.addEventListener('load', updateOverflowTitles);
+    window.addEventListener('resize', updateOverflowTitles);
     </script>
 
     <script>

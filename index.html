@@ -1346,8 +1346,15 @@
                 float audioPulse = sin(u_time * 2.0 + displacedDist * 6.0) * 0.5 + 0.5;
                 audioPulse *= bassReact * 1.5;
 
-                color += hotpink * audioPulse * 0.6;
-                color += cyan * audioPulse * 0.4;
+                // === Дополнительный бас-слой с сохранением красоты Idle ===
+                vec3 idleLayer = color; // сохраняем текущую органику idle
+                vec3 bassLayer = mix(hotpink, cyan, 0.5); // мягкий слой баса
+                float bassAlpha = smoothstep(0.05, 0.6, bass) * 0.48; // мягкость
+                color = mix(idleLayer, idleLayer + bassLayer * 0.28, bassAlpha);
+
+                // === Аудио-пульс поверх для легкого сияния ===
+                color += hotpink * audioPulse * 0.32;
+                color += cyan * audioPulse * 0.24;
 
                 // === Финальный воздушный лифт ===
                 color += vec3(0.08, 0.04, 0.08) * (0.6 + bassReact);

@@ -2004,12 +2004,7 @@
                 });
 
                 try {
-                    await fetch('https://hints.ellijabooking.workers.dev/track', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: payload,
-                        keepalive: true
-                    });
+                    await fetch('https://hints.ellijabooking.workers.dev/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true });
                 } catch (e) {
                     console.error("Ошибка отправки статистики:", e);
                 }
@@ -2020,41 +2015,44 @@
                     requestAnimationFrame(hookPlayTrack);
                     return;
                 }
-
+        
                 const originalPlayTrack = window.playTrack;
                 let trackTimer = null;
-
+        
                 window.playTrack = function(src, title, artist, cover) {
-                    listenStats.currentTrackTitle = title;
-                    if (!listenStats.tracksPlayed[title]) {
-                        listenStats.tracksPlayed[title] = { count: 0, seconds: 0 };
+                    if (listenStats.currentTrackTitle) {
+                        const prev = listenStats.currentTrackTitle;
+                        const now = Date.now();
+                        const elapsed = Math.floor((now - listenStats.currentTrackStart)/1000);
+                        if (!listenStats.tracksPlayed[prev]) listenStats.tracksPlayed[prev] = { plays:0, seconds:0 };
+                        listenStats.tracksPlayed[prev].seconds += elapsed;
+                        localStorage.setItem('trackPlays', JSON.stringify(listenStats.tracksPlayed));
                     }
-                    listenStats.tracksPlayed[title].count++;
-                    
-                    // СРАЗУ сохраняем в localStorage
+        
+                    listenStats.currentTrackTitle = title;
+                    listenStats.currentTrackStart = Date.now();
+        
+                    if (!listenStats.tracksPlayed[title]) listenStats.tracksPlayed[title] = { plays:0, seconds:0 };
+                    listenStats.tracksPlayed[title].plays++;
                     localStorage.setItem('trackPlays', JSON.stringify(listenStats.tracksPlayed));
-
+                    updatePlaysUI(title, listenStats.tracksPlayed[title].plays);
+        
+                    listenStats.totalPlays++;
+                    localStorage.setItem('totalPlays', listenStats.totalPlays);
+        
+                    const sessionTime = Math.floor((Date.now() - listenStats.sessionStart)/1000);
+                    listenStats.sessionTime = sessionTime;
+        
                     originalPlayTrack(src, title, artist, cover);
-                    
-                    // Отправляем на бэк информацию о количестве
-                    sendEvent('track_play', { 
-                        track: title, 
-                        artist: artist, 
-                        totalCount: listenStats.tracksPlayed[title].count 
-                    });
-
+                    sendEvent('track_play', { track: title, artist });
+        
                     if (trackTimer) clearInterval(trackTimer);
                     trackTimer = setInterval(() => {
                         const curr = listenStats.currentTrackTitle;
                         if (curr && listenStats.tracksPlayed[curr]) {
                             listenStats.tracksPlayed[curr].seconds += 5;
                             localStorage.setItem('trackPlays', JSON.stringify(listenStats.tracksPlayed));
-                            
-                            // Отправляем длительность прослушивания
-                            sendEvent('track_update', { 
-                                track: curr, 
-                                seconds: listenStats.tracksPlayed[curr].seconds 
-                            });
+                            sendEvent('track_update', { track: curr });
                         }
                     }, 5000);
                 };

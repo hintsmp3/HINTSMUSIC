@@ -1976,7 +1976,7 @@
         document.querySelectorAll('.track-plays').forEach(el => {
             const key = el.dataset.track;
             if(!tracksPlayed[key]) tracksPlayed[key] = { count: 0, seconds: 0 };
-            el.textContent = tracksPlayed[key].count;
+            el.textContent = tracksPlayed[key]?.count || 0;
         });
         localStorage.setItem(TRACKS_KEY, JSON.stringify(tracksPlayed));
 
@@ -2040,12 +2040,6 @@
                 currentTrack = title;
                 currentTrackStart = now;
                 if(!tracksPlayed[title]) tracksPlayed[title] = { count: 0, seconds: 0 };
-                tracksPlayed[title].count++;
-                totalPlays++;
-
-                localStorage.setItem(TRACKS_KEY, JSON.stringify(tracksPlayed));
-                localStorage.setItem(TOTAL_KEY, totalPlays);
-                updatePlaysUI(title, tracksPlayed[title].count);
 
                 if(typeof orig === 'function') orig(src, title, artist, cover);
                 sendEvent('track_play', { track: title, artist });

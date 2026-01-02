@@ -1947,88 +1947,56 @@
         updateSlides();
     });
     </script>
-    <script>
-// === HINTS AUDIO TRACKING & SESSION LOGGING (Telegram compatible) ===
+<script>
+// === HINTS AUDIO TRACKING & SESSION LOGGING (User-Scoped v3) ===
 (function() {
-    // Support both in Telegram and standalone (tgUser may be null)
-    const TRACKS_KEY = 'hints_trackPlays_v2';
-    const TOTAL_KEY = 'hints_totalPlays_v2';
-    const SESSION_KEY = 'hints_sessionStart_v2';
-    const COINS_KEY = 'hints_coins_v1';
+    // Use tgUser.id as part of the storage key for per-user isolation (if available)
+    let userId = (typeof tgUser === 'object' && tgUser && tgUser.id) ? String(tgUser.id) : 'guest';
+    // Compose storage keys
+    function key(base) { return `hints_${base}_v3_${userId}`; }
 
-    // Session start timestamp
+    const TRACKS_KEY = key('trackPlays');
+    const TOTAL_KEY = key('totalPlays');
+    const SESSION_KEY = key('sessionStart');
+    const COINS_KEY = key('coins');
+    const TOTAL_SESSION_KEY = key('totalSessionTime');
+
     let sessionStart = Number(localStorage.getItem(SESSION_KEY)) || Date.now();
     localStorage.setItem(SESSION_KEY, sessionStart);
 
-    // Track stats
     let totalPlays = Number(localStorage.getItem(TOTAL_KEY)) || 0;
     let tracksPlayed = {};
-    try {
-        tracksPlayed = JSON.parse(localStorage.getItem(TRACKS_KEY)) || {};
-    } catch(e) {
-        tracksPlayed = {};
-    }
-    // Hints coins (optional)
+    try { tracksPlayed = JSON.parse(localStorage.getItem(TRACKS_KEY)) || {}; } catch(e){ tracksPlayed = {}; }
     let hintsCoins = Number(localStorage.getItem(COINS_KEY)) || 0;
 
-    // UI update
     function updatePlaysUI(track, count) {
         const el = document.querySelector(`.track-plays[data-track="${CSS.escape(track)}"]`);
-        if (el) el.textContent = count;
+        if(el) el.textContent = count;
     }
-    // Init UI
+
     document.querySelectorAll('.track-plays').forEach(el => {
         const key = el.dataset.track;
-        let v = tracksPlayed[key];
-        if (!v) {
-            v = { count: 0, seconds: 0 };
-            tracksPlayed[key] = v;
-        } else if (typeof v === "number") {
-            v = { count: v, seconds: 0 };
-            tracksPlayed[key] = v;
-        } else if (typeof v === "object" && v.plays !== undefined) {
-            v = { count: v.plays, seconds: v.seconds || 0 };
-            tracksPlayed[key] = v;
-        }
-        el.textContent = v.count;
+        if(!tracksPlayed[key]) tracksPlayed[key] = { count: 0, seconds: 0 };
+        el.textContent = tracksPlayed[key].count;
     });
     localStorage.setItem(TRACKS_KEY, JSON.stringify(tracksPlayed));
 
-    // --- State for tracking
     let currentTrack = null;
     let currentTrackStart = null;
     let trackTimer = null;
-    let sessionTimer = null;
-    let sessionUpdateTimer = null;
-    let totalSessionTime = Number(localStorage.getItem('hints_totalSessionTime')) || 0;
-    let lastSessionUpdate = Date.now();
 
-    // --- Debug userId for standalone test
-    const debugUserId = tgUser?.id || 123456789; // Для теста вне Telegram
-    // --- Snapshot for backend
     function getSnapshot(trackOverride = null) {
         const tracksCopy = {};
-        for (const k in tracksPlayed) {
-            if (tracksPlayed[k] && typeof tracksPlayed[k] === 'object') {
-                tracksCopy[k] = { count: tracksPlayed[k].count, seconds: tracksPlayed[k].seconds };
-            }
+        for(const k in tracksPlayed){
+            tracksCopy[k] = { count: tracksPlayed[k].count, seconds: tracksPlayed[k].seconds };
         }
-        const sessionTime = Math.floor((Date.now() - sessionStart) / 1000);
-        // totalSessionTime = sum of all sessionTime (across reloads)
-        let storedTotal = Number(localStorage.getItem('hints_totalSessionTime')) || 0;
+        let storedTotal = Number(localStorage.getItem(TOTAL_SESSION_KEY)) || 0;
+        let sessionTime = Math.floor((Date.now() - sessionStart)/1000);
         let nowTotal = storedTotal + sessionTime;
-        // Save for next session
-        localStorage.setItem('hints_totalSessionTime', nowTotal);
+        localStorage.setItem(TOTAL_SESSION_KEY, nowTotal);
 
-        const payload = {
-            userId: debugUserId,
-            totalPlays,
-            sessionTime,
-            totalSessionTime: nowTotal,
-            tracksPlayed: tracksCopy,
-            hintsCoins: hintsCoins,
-        };
-        if (trackOverride && tracksPlayed[trackOverride]) {
+        const payload = { totalPlays, sessionTime, totalSessionTime: nowTotal, tracksPlayed: tracksCopy, hintsCoins, userId };
+        if(trackOverride && tracksPlayed[trackOverride]){
             payload.track = trackOverride;
             payload.count = tracksPlayed[trackOverride].count;
             payload.seconds = tracksPlayed[trackOverride].seconds;
@@ -2036,15 +2004,15 @@
         return payload;
     }
 
-    // --- Send event to backend
     async function sendEvent(eventType, extra = {}) {
-        const trackKey = extra.track || null;
-        const payload = getSnapshot(trackKey);
-        payload.eventType = eventType;
-        payload.timestamp = Date.now();
-        Object.assign(payload, extra);
+        const payload = {
+            eventType,
+            details: getSnapshot(extra.track || null),
+            timestamp: Date.now(),
+            ...extra
+        };
         try {
-            await fetch('https://hintsmp3.worker.dev/track', {
+            await fetch('https://hints.ellijabooking.workers.dev/track', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
@@ -2053,89 +2021,67 @@
         } catch(e){}
     }
 
-    // --- Hook playTrack to wrap logic ---
     function hookPlayTrack() {
-        if (typeof window.playTrack !== 'function') {
+        if(typeof window.playTrack !== 'function'){
             requestAnimationFrame(hookPlayTrack);
             return;
         }
         const orig = window.playTrack;
-        window.playTrack = function(src, title, artist, cover) {
+        window.playTrack = function(src, title, artist, cover){
             const now = Date.now();
-            // Save previous track seconds
-            if (currentTrack && tracksPlayed[currentTrack]) {
+            if(currentTrack && tracksPlayed[currentTrack]){
                 const elapsed = Math.floor((now - currentTrackStart)/1000);
                 tracksPlayed[currentTrack].seconds += elapsed;
-                localStorage.setItem(TRACKS_KEY, JSON.stringify(tracksPlayed));
             }
-            // New track stats
+
             currentTrack = title;
             currentTrackStart = now;
-            if (!tracksPlayed[title]) tracksPlayed[title] = { count: 0, seconds: 0 };
+            if(!tracksPlayed[title]) tracksPlayed[title] = { count: 0, seconds: 0 };
             tracksPlayed[title].count++;
             totalPlays++;
+
             localStorage.setItem(TRACKS_KEY, JSON.stringify(tracksPlayed));
             localStorage.setItem(TOTAL_KEY, totalPlays);
             updatePlaysUI(title, tracksPlayed[title].count);
-            if (typeof orig === 'function') orig(src, title, artist, cover);
+
+            if(typeof orig === 'function') orig(src, title, artist, cover);
             sendEvent('track_play', { track: title, artist });
-            // Clear previous timer, start 5s periodic update for this track
-            if (trackTimer) clearInterval(trackTimer);
-            let lastTrackSeconds = Date.now();
-            trackTimer = setInterval(() => {
-                if (currentTrack && tracksPlayed[currentTrack]) {
+
+            if(trackTimer) clearInterval(trackTimer);
+            trackTimer = setInterval(()=>{
+                if(currentTrack && tracksPlayed[currentTrack]){
                     const now = Date.now();
                     const elapsed = Math.floor((now - currentTrackStart)/1000);
                     tracksPlayed[currentTrack].seconds += elapsed;
                     currentTrackStart = now;
                     localStorage.setItem(TRACKS_KEY, JSON.stringify(tracksPlayed));
-                    sendEvent('track_update', {
-                        track: currentTrack,
-                        count: tracksPlayed[currentTrack].count,
-                        seconds: tracksPlayed[currentTrack].seconds
-                    });
+                    sendEvent('track_update', { track: currentTrack });
                 }
             }, 5000);
         };
     }
     hookPlayTrack();
 
-    // --- Session update logic: every 10s send session_update
-    function startSessionUpdate() {
-        if (sessionUpdateTimer) clearInterval(sessionUpdateTimer);
-        sessionUpdateTimer = setInterval(() => {
-            sendEvent('session_update');
-        }, 10000);
-    }
-    startSessionUpdate();
-
-    // --- Session start event
+    let sessionUpdateTimer = setInterval(()=>{ sendEvent('session_update'); }, 10000);
     sendEvent('session_start');
 
-    // --- On unload: flush track seconds and session_end
-    window.addEventListener('beforeunload', () => {
+    window.addEventListener('beforeunload', ()=>{
         const now = Date.now();
-        // Save current track seconds
-        if (currentTrack && tracksPlayed[currentTrack]) {
-            const elapsed = Math.floor((now - currentTrackStart)/1000);
-            tracksPlayed[currentTrack].seconds += elapsed;
-            localStorage.setItem(TRACKS_KEY, JSON.stringify(tracksPlayed));
+        if(currentTrack && tracksPlayed[currentTrack]){
+            tracksPlayed[currentTrack].seconds += Math.floor((now - currentTrackStart)/1000);
         }
-        // Save totalSessionTime
-        const sessionTime = Math.floor((now - sessionStart)/1000);
-        let totalSessionTime = Number(localStorage.getItem('hints_totalSessionTime')) || 0;
-        totalSessionTime += sessionTime;
-        localStorage.setItem('hints_totalSessionTime', totalSessionTime);
+        let totalSessionTime = Number(localStorage.getItem(TOTAL_SESSION_KEY)) || 0;
+        totalSessionTime += Math.floor((now - sessionStart)/1000);
+        localStorage.setItem(TOTAL_SESSION_KEY, totalSessionTime);
         sendEvent('session_end');
     });
 
-    // --- Expose hintsCoins API for future (if needed) ---
-    window.addHintsCoins = function(delta) {
+    window.addHintsCoins = function(delta){
         hintsCoins = Math.max(0, hintsCoins + Number(delta||0));
         localStorage.setItem(COINS_KEY, hintsCoins);
     };
 })();
-    </script>
+</script>
 
 </body>
 </html>

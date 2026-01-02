@@ -1992,7 +1992,7 @@
         localStorage.setItem(TRACKS_KEY, JSON.stringify(tracksPlayed));
 
         // --- Сбор snapshot для отправки ---
-        function getSnapshot() {
+        function getSnapshot(trackOverride = null) {
             // Копия, чтобы не было мутаций по ссылке
             let tracksCopy = {};
             for (const k in tracksPlayed) {
@@ -2001,24 +2001,32 @@
                     tracksCopy[k] = { count: tracksPlayed[k].count, seconds: tracksPlayed[k].seconds };
                 }
             }
-            const sessionSeconds = Math.floor((Date.now() - sessionStart) / 1000);
-            return {
+            const sessionTime = Math.floor((Date.now() - sessionStart) / 1000);
+            let payload = {
+                userId: tgUser?.id || null,
                 totalPlays,
-                tracksPlayed: tracksCopy,
-                sessionSeconds
+                sessionTime,
+                tracksPlayed: tracksCopy
             };
+            // Если trackOverride указан, поднимаем count и seconds выбранного трека в корень
+            if (trackOverride && tracksPlayed[trackOverride]) {
+                payload.track = trackOverride;
+                payload.count = tracksPlayed[trackOverride].count;
+                payload.seconds = tracksPlayed[trackOverride].seconds;
+            }
+            return payload;
         }
 
         // --- События и отправка ---
         async function sendEvent(eventType, extra = {}) {
-            // Всегда отправляем полный snapshot
-            const details = Object.assign({}, getSnapshot(), extra);
-            const payload = {
-                userId: tgUser?.id || null,
-                eventType,
-                details,
-                timestamp: Date.now()
-            };
+            // Определяем, есть ли трек в extra
+            let trackKey = extra.track || null;
+            let payload = getSnapshot(trackKey);
+            // Добавляем eventType и timestamp
+            payload.eventType = eventType;
+            payload.timestamp = Date.now();
+            // Добавляем остальные поля из extra (artist и т.п.)
+            Object.assign(payload, extra);
             try {
                 await fetch('/track', {
                     method: 'POST',

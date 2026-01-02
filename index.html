@@ -2015,7 +2015,7 @@
             payload.telegram_user_id = tgUser.id;
         }
         try {
-            await fetch('https://hints.ellijabooking.workers.dev', {
+            await fetch('https://hints.ellijabooking.workers.dev/track', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),

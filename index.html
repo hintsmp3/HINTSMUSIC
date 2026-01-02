@@ -1949,8 +1949,10 @@
     <script>
     // === HINTS AUDIO TRACKING & SESSION LOGGING (User-Scoped v3, Telegram user id aware) ===
     (function() {
-        // Use tgUser.id as part of the storage key for per-user isolation (if available)
-        let userId = (typeof tgUser === 'object' && tgUser && tgUser.id) ? String(tgUser.id) : 'guest';
+        // Используем глобальный tgUser
+        const tg = window.tgUser || null;
+        let userId = (tg && tg.id) ? String(tg.id) : 'guest';
+
         // Compose storage keys
         function key(base) { return `hints_${base}_v3_${userId}`; }
 
@@ -1974,9 +1976,9 @@
         }
 
         document.querySelectorAll('.track-plays').forEach(el => {
-            const key = el.dataset.track;
-            if(!tracksPlayed[key]) tracksPlayed[key] = { count: 0, seconds: 0 };
-            el.textContent = tracksPlayed[key]?.count || 0;
+            const k = el.dataset.track;
+            if(!tracksPlayed[k]) tracksPlayed[k] = { count: 0, seconds: 0 };
+            el.textContent = tracksPlayed[k]?.count || 0;
         });
         localStorage.setItem(TRACKS_KEY, JSON.stringify(tracksPlayed));
 
@@ -2010,9 +2012,8 @@
                 timestamp: Date.now(),
                 ...extra
             };
-            // Add Telegram user id if available
-            if (typeof tgUser === 'object' && tgUser && tgUser.id) {
-                payload.telegram_user_id = tgUser.id;
+            if(tg && tg.id){
+                payload.telegram_user_id = tg.id;
             }
             try {
                 await fetch('https://hints.ellijabooking.workers.dev/track', {
